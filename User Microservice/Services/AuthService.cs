@@ -1,7 +1,4 @@
 ﻿using Microsoft.AspNetCore.Identity;
-using User_Microservice.DTOs;
-
-
 namespace User_Microservice.Services
 {
     public class AuthService(IPasswordHasher<string> passwordHasher)
