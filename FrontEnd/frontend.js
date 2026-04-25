@@ -1,14 +1,18 @@
-const API_URL = "http://localhost:5000/api";
+const API_URL = "https://localhost:5000/api";
 
-// un array basic
-const deck = [
-  { suit: "hearts", value: "A" },
-  { suit: "spades", value: "K" },
-  { suit: "diamonds", value: "10" },
-  { suit: "clubs", value: "7" }
-];
+// Deck
 
-// Trimite deck-ul catre server
+const suits = ["hearts", "diamonds", "clubs", "spades"];
+const values = ["2", "3", "4", "5", "6", "7", "8", "9", "10", "J", "Q", "K", "A"];
+
+const deck = suits.flatMap(suit =>
+  values.map(value => ({
+    suit,
+    value
+  }))
+);
+
+// Trimite deck la server
 async function sendDeck() {
   try {
     const response = await fetch(`${API_URL}/deck`, {
@@ -19,29 +23,63 @@ async function sendDeck() {
       body: JSON.stringify(deck)
     });
 
+    if (!response.ok) throw new Error("Nu s-a putut trimite deck-ul");
+
     const data = await response.json();
     console.log("Deck trimis:", data);
+
   } catch (error) {
-    console.error("Eroare la trimitere deck:", error);
+    console.error("Eroare sendDeck:", error);
   }
 }
 
-// Ia jucatorii de la Server
+// Jucatori
+
+// Ia jucatorii de pe server
 async function getPlayers() {
   try {
-    const response = await fetch(`${API_URL}/players`);
-    const players = await response.json();
+    console.log("Se face fetch la jucători...");
 
-    console.log("Jucători:", players);
+    const response = await fetch(`${API_URL}/players`);
+
+    if (!response.ok) throw new Error("Nu s-au putut lua jucatorii");
+
+    const players = await response.json();
+    displayPlayers(players);
+
   } catch (error) {
-    console.error("Eroare la fetch jucători:", error);
+    console.error("Eroare getPlayers:", error);
   }
 }
 
-// Fetch-ul
-async function initGame() {
+// Afisare jucatori
+function displayPlayers(players) {
+  console.log("=== JUCATORI ===");
+
+  if (!players.length) {
+    console.log("Nu exista jucatori pe server");
+    return;
+  }
+
+  players.forEach(p => {
+    console.log(`
+ID: ${p.id}
+Nume: ${p.username}
+Chips: ${p.chips}
+Bet: ${p.bet}
+Status: ${p.status}
+------------------------
+    `);
+  });
+}
+
+// Init mate
+
+async function init() {
+  console.log("=== START ===");
+
   await sendDeck();
   await getPlayers();
 }
 
-initGame();
+init();
