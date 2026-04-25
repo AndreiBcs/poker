@@ -1,58 +1,38 @@
-const API_URL = "https://localhost:5000/api";
+// URL-ul tău original va rămâne comentat până e gata backend-ul
+// const API_URL = "https://localhost:5000/api";
 
-// Deck
+// URL public de test
+const TEST_API_URL = "https://jsonplaceholder.typicode.com/users";
 
-const suits = ["hearts", "diamonds", "clubs", "spades"];
-const values = ["2", "3", "4", "5", "6", "7", "8", "9", "10", "J", "Q", "K", "A"];
-
-const deck = suits.flatMap(suit =>
-  values.map(value => ({
-    suit,
-    value
-  }))
-);
-
-// Trimite deck la server
-async function sendDeck() {
-  try {
-    const response = await fetch(`${API_URL}/deck`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json"
-      },
-      body: JSON.stringify(deck)
-    });
-
-    if (!response.ok) throw new Error("Nu s-a putut trimite deck-ul");
-
-    const data = await response.json();
-    console.log("Deck trimis:", data);
-
-  } catch (error) {
-    console.error("Eroare sendDeck:", error);
-  }
-}
-
-// Jucatori
-
-// Ia jucatorii de pe server
 async function getPlayers() {
   try {
-    console.log("Se face fetch la jucători...");
+    console.log("Se face fetch la jucători de test...");
 
-    const response = await fetch(`${API_URL}/players`);
+    // 1. Facem fetch de la API-ul public
+    const response = await fetch(TEST_API_URL);
 
     if (!response.ok) throw new Error("Nu s-au putut lua jucatorii");
 
-    const players = await response.json();
-    displayPlayers(players);
+    const rawData = await response.json();
+
+    // 2. Transformăm datele primite în formatul de poker așteptat de funcția ta
+    const fakePokerPlayers = rawData.map(user => ({
+      id: user.id,
+      username: user.username, 
+      chips: Math.floor(Math.random() * 5000) + 1000, // Generăm random între 1000 și 6000 de jetoane
+      bet: 0,
+      status: "playing"
+    }));
+
+    // 3. Trimitem jucătorii formatați către funcția de afișare
+    displayPlayers(fakePokerPlayers);
 
   } catch (error) {
     console.error("Eroare getPlayers:", error);
   }
 }
 
-// Afisare jucatori
+// Afisare jucatori (a rămas complet neschimbată)
 function displayPlayers(players) {
   console.log("=== JUCATORI ===");
 
@@ -73,12 +53,10 @@ Status: ${p.status}
   });
 }
 
-// Init mate
-
+// Ye Neymar sunny init
 async function init() {
   console.log("=== START ===");
-
-  await sendDeck();
+  
   await getPlayers();
 }
 
