@@ -1,11 +1,35 @@
+using Microsoft.EntityFrameworkCore;
 using Scalar.AspNetCore;
+using UserService.Dependencies;
+using UserService.Features.Auth;
+using UserService.Features.User;
+using UserService.Infrastructure.Persistence;
 
 var builder = WebApplication.CreateBuilder(args);
-builder.Services.AddOpenApi();
+
+builder.Services.AddDatabase(builder.Configuration)
+                .AddRepositories()
+                .AddServices()
+                .AddValidators()
+                .AddOpenApi()
+                .AddAuth(builder.Configuration)
+                .AddRateLimiting();   
 
 var app = builder.Build();
 
-app.MapGet("/", () => "Hello World!");
+using (var scope = app.Services.CreateScope())
+{
+    var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+    db.Database.Migrate();
+}
+
+app.UseAuthentication();
+app.UseAuthorization();
+
+app.UseRateLimiter();
+
+app.MapUserEndpoints();
+app.MapAuthEndpoints();
 
 app.MapOpenApi();
 app.MapScalarApiReference();

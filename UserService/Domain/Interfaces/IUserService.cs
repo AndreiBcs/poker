@@ -7,5 +7,7 @@ namespace UserService.Domain.Interfaces
         Task<UserResponseDto?> GetUser(Guid id);
         Task<UserResponseDto?> UpdateUser(Guid id, UpdateUserDto dto);
         Task<bool> DeleteUser(Guid id); 
+        Task<bool> UsernameConflict(string? username);
+        Task<bool> EmailConflict(string? username);
     }
 }

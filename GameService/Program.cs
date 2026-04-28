@@ -1,4 +1,3 @@
-
 using GameService.Hubs;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -40,4 +39,3 @@ app.UseHttpsRedirection();
 app.MapHub<GameHub>("/gamehub");
 
 app.Run();
-

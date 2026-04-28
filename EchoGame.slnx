@@ -1,4 +1,0 @@
-<Solution>
-  <Project Path=".NET-CRUD-API/.NET-CRUD-API.csproj" />
-  <Project Path="GameService/GameService.csproj" />
-</Solution>
