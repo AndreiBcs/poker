@@ -18,17 +18,44 @@ builder.Services.AddCors(options =>
     });
 });
 
+
+
+
+builder.Services.AddSignalR();
 builder.Services.AddOpenApi();
 
-builder.Services.AddSignalR(); 
+
+
+builder.Services.AddSignalR();
+
+builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
+    .AddJwtBearer(options =>
+    {
+        options.TokenValidationParameters = new TokenValidationParameters
+        {
+            ValidateIssuer = true,
+            ValidateAudience = true,
+            ValidateLifetime = true,
+            ValidateIssuerSigningKey = true,
+            ValidIssuer = builder.Configuration["Jwt:Issuer"],
+            ValidAudience = builder.Configuration["Jwt:Audience"],
+            IssuerSigningKey = new SymmetricSecurityKey(
+                Encoding.UTF8.GetBytes(builder.Configuration["Jwt:Secret"]!))
+        };
+    });
+
+builder.Services.AddAuthorization();
+
 var app = builder.Build();
 app.UseCors();
 
-app.MapHub<GameHub>("/gamehub");
+app.UseAuthentication(); 
+app.UseAuthorization();
 
-app.Run();
 
-// Configure the HTTP request pipeline.
+
+
+
 if (app.Environment.IsDevelopment())
 {
     app.MapOpenApi();

@@ -1,7 +1,8 @@
 using Microsoft.AspNetCore.SignalR;
 
 namespace GameService.Hubs
-{
+{     
+     [Authorize]
     public class GameHub : Hub
     {
         // When a player clicks, their game client calls this method
