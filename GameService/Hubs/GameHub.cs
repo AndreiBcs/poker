@@ -1,23 +1,30 @@
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.SignalR;
+using System.Security.Claims;
 
-namespace GameService.Hubs
-{     
-     [Authorize]
-    public class GameHub : Hub
+[Authorize]
+public class GameHub(GameManager gameManager) : Hub
+{
+    
+    public async Task JoinRoom(string roomId)
     {
-        // When a player clicks, their game client calls this method
-        public async Task SendEchoPulse(double x, double y, string pulseType)
-        {
-            // The server instantly forwards this coordinates to ALL OTHER players
-            // "ReceiveEchoPulse" is the Javascript function the clients will listen for
-            await Clients.Others.SendAsync("ReceiveEchoPulse", x, y, pulseType, Context.ConnectionId);
-        }
+        var userId = Context.UserIdentifier; 
+        var username = Context.User.FindFirst(ClaimTypes.Name)?.Value; 
 
-        // Optional: Run code when a player connects
-        public override async Task OnConnectedAsync()
-        {
-            // E.g., spawn a new player
-            await base.OnConnectedAsync();
-        }
+      
+        await Groups.AddToGroupAsync(Context.ConnectionId, roomId);
+
+        
+        await Clients.Group(roomId).SendAsync("PlayerJoined", username);
+    }
+
+  
+    public async Task PlaceBet(string roomId, int amount)
+    {
+        var userId = Context.UserIdentifier;
+        
+        await Clients.Group(roomId).SendAsync("StateUpdated",);  // acolo dupa stateupdate trebe metoda catre arata datele mesei dar 
+                                                                //fara sa vada restul  deci un DTO pentru tabla si dupa ceva care te lasa doar un player  pe tine deci am putea 
+                                                                // injectie de dependenta
     }
 }
