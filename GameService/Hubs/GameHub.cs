@@ -1,30 +1,27 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.SignalR;
-using System.Security.Claims;
+using GameService.Providers.Interfaces;
+using GameService.Core; // Assuming GameManager is here
 
 [Authorize]
-public class GameHub(GameManager gameManager) : Hub
+public class GameHub(GameManager gameManager, ITableStateDtoProvider tableStateDtoProvider) : Hub
 {
-    
-    public async Task JoinRoom(string roomId)
-    {
-        var userId = Context.UserIdentifier; 
-        var username = Context.User.FindFirst(ClaimTypes.Name)?.Value; 
+    private readonly GameManager _gameManager = gameManager;
+    private readonly ITableStateDtoProvider _tableStateDtoProvider = tableStateDtoProvider;
 
-      
-        await Groups.AddToGroupAsync(Context.ConnectionId, roomId);
-
-        
-        await Clients.Group(roomId).SendAsync("PlayerJoined", username);
-    }
-
-  
     public async Task PlaceBet(string roomId, int amount)
     {
-        var userId = Context.UserIdentifier;
         
-        await Clients.Group(roomId).SendAsync("StateUpdated",);  // acolo dupa stateupdate trebe metoda catre arata datele mesei dar 
-                                                                //fara sa vada restul  deci un DTO pentru tabla si dupa ceva care te lasa doar un player  pe tine deci am putea 
-                                                                // injectie de dependenta
+        Table tableState = _gameManager.GetTable(roomId);
+
+        
+        foreach (var player in tableState.Players)
+        {
+            
+            var safeDto = _tableStateDtoProvider.BuildTableStateDto(tableState, player.Id);
+            
+           
+            await Clients.User(player.Id).SendAsync("StateUpdated", safeDto);
+        }
     }
 }

@@ -62,7 +62,8 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
         };
 
     });
-
+    
+builder.Services.AddGameServices().AddRepositories();
 builder.Services.AddAuthorization();
 builder.Services.AddSingleton<GameManager>();
 var app = builder.Build();
