@@ -1,0 +1,12 @@
+D:\BlackjackNet\BlackjackNet\bin\Debug\BlackjackNet.exe.config
+D:\BlackjackNet\BlackjackNet\bin\Debug\BlackjackNet.exe
+D:\BlackjackNet\BlackjackNet\bin\Debug\BlackjackNet.pdb
+D:\BlackjackNet\BlackjackNet\obj\Debug\BlackjackNet.csproj.AssemblyReference.cache
+D:\BlackjackNet\BlackjackNet\obj\Debug\BlackjackNet.fClient.resources
+D:\BlackjackNet\BlackjackNet\obj\Debug\BlackjackNet.fServer.resources
+D:\BlackjackNet\BlackjackNet\obj\Debug\BlackjackNet.Properties.Resources.resources
+D:\BlackjackNet\BlackjackNet\obj\Debug\BlackjackNet.csproj.GenerateResource.cache
+D:\BlackjackNet\BlackjackNet\obj\Debug\BlackjackNet.csproj.CoreCompileInputs.cache
+D:\BlackjackNet\BlackjackNet\obj\Debug\BlackjackNet.exe
+D:\BlackjackNet\BlackjackNet\obj\Debug\BlackjackNet.pdb
+D:\BlackjackNet\BlackjackNet\obj\Debug\BlackjackNet.exe.config

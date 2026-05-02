@@ -1,0 +1,260 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="15.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <Import Project="$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props" Condition="Exists('$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props')" />
+  <PropertyGroup>
+    <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
+    <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
+    <ProjectGuid>{4F054A7D-FD43-4AED-BE40-C64298874A19}</ProjectGuid>
+    <OutputType>WinExe</OutputType>
+    <RootNamespace>BlackjackNet</RootNamespace>
+    <AssemblyName>BlackjackNet</AssemblyName>
+    <TargetFrameworkVersion>v4.7.2</TargetFrameworkVersion>
+    <FileAlignment>512</FileAlignment>
+    <AutoGenerateBindingRedirects>true</AutoGenerateBindingRedirects>
+    <Deterministic>true</Deterministic>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
+    <PlatformTarget>AnyCPU</PlatformTarget>
+    <DebugSymbols>true</DebugSymbols>
+    <DebugType>full</DebugType>
+    <Optimize>false</Optimize>
+    <OutputPath>bin\Debug\</OutputPath>
+    <DefineConstants>DEBUG;TRACE</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
+    <PlatformTarget>AnyCPU</PlatformTarget>
+    <DebugType>pdbonly</DebugType>
+    <Optimize>true</Optimize>
+    <OutputPath>bin\Release\</OutputPath>
+    <DefineConstants>TRACE</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+  </PropertyGroup>
+  <ItemGroup>
+    <Reference Include="System" />
+    <Reference Include="System.Core" />
+    <Reference Include="System.Xml.Linq" />
+    <Reference Include="System.Data.DataSetExtensions" />
+    <Reference Include="Microsoft.CSharp" />
+    <Reference Include="System.Data" />
+    <Reference Include="System.Deployment" />
+    <Reference Include="System.Drawing" />
+    <Reference Include="System.Net.Http" />
+    <Reference Include="System.Windows.Forms" />
+    <Reference Include="System.Xml" />
+  </ItemGroup>
+  <ItemGroup>
+    <Compile Include="CardDeck.cs" />
+    <Compile Include="Dealer.cs" />
+    <Compile Include="fClient.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="fClient.Designer.cs">
+      <DependentUpon>fClient.cs</DependentUpon>
+    </Compile>
+    <Compile Include="fServer.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="fServer.Designer.cs">
+      <DependentUpon>fServer.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Participant.cs" />
+    <Compile Include="Player.cs" />
+    <Compile Include="PlayingCard.cs" />
+    <Compile Include="Program.cs" />
+    <Compile Include="Properties\AssemblyInfo.cs" />
+    <EmbeddedResource Include="fClient.resx">
+      <DependentUpon>fClient.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="fServer.resx">
+      <DependentUpon>fServer.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Properties\Resources.resx">
+      <Generator>ResXFileCodeGenerator</Generator>
+      <SubType>Designer</SubType>
+      <LastGenOutput>Resources.Designer.cs</LastGenOutput>
+    </EmbeddedResource>
+    <None Include="Properties\Settings.settings">
+      <Generator>SettingsSingleFileGenerator</Generator>
+      <LastGenOutput>Settings.Designer.cs</LastGenOutput>
+    </None>
+    <Compile Include="Properties\Resources.Designer.cs">
+      <AutoGen>True</AutoGen>
+      <DesignTime>True</DesignTime>
+      <DependentUpon>Resources.resx</DependentUpon>
+    </Compile>
+    <Compile Include="Properties\Settings.Designer.cs">
+      <AutoGen>True</AutoGen>
+      <DependentUpon>Settings.settings</DependentUpon>
+      <DesignTimeSharedInput>True</DesignTimeSharedInput>
+    </Compile>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="App.config" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Properties\imagini\2_Club.jpg" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Properties\imagini\2_Diamond.jpg" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Properties\imagini\2_Heart.jpg" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Properties\imagini\2_Spade.jpg" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Properties\imagini\3_Club.jpg" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Properties\imagini\3_Diamond.jpg" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Properties\imagini\3_Heart.jpg" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Properties\imagini\3_Spade.jpg" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Properties\imagini\4_Club.jpg" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Properties\imagini\4_Diamond.jpg" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Properties\imagini\4_Heart.jpg" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Properties\imagini\4_Spade.jpg" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Properties\imagini\5_Club.jpg" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Properties\imagini\5_Diamond.jpg" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Properties\imagini\5_Heart.jpg" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Properties\imagini\5_Spade.jpg" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Properties\imagini\6_Club.jpg" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Properties\imagini\6_Diamond.jpg" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Properties\imagini\6_Heart.jpg" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Properties\imagini\6_Spade.jpg" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Properties\imagini\7_Club.jpg" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Properties\imagini\7_Diamond.jpg" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Properties\imagini\7_Heart.jpg" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Properties\imagini\7_Spade.jpg" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Properties\imagini\8_Club.jpg" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Properties\imagini\8_Diamond.jpg" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Properties\imagini\8_Heart.jpg" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Properties\imagini\8_Spade.jpg" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Properties\imagini\9_Club.jpg" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Properties\imagini\9_Diamond.jpg" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Properties\imagini\9_Heart.jpg" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Properties\imagini\9_Spade.jpg" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Properties\imagini\10_Club.jpg" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Properties\imagini\10_Diamond.jpg" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Properties\imagini\10_Heart.jpg" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Properties\imagini\10_Spade.jpg" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Properties\imagini\Ace_Club.jpg" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Properties\imagini\Ace_Diamond.jpg" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Properties\imagini\Ace_Heart.jpg" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Properties\imagini\Ace_Spade.jpg" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Properties\imagini\Jack_Club.jpg" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Properties\imagini\Jack_Diamond.jpg" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Properties\imagini\Jack_Heart.jpg" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Properties\imagini\Jack_Spade.jpg" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Properties\imagini\King_Club.jpg" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Properties\imagini\King_Diamond.jpg" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Properties\imagini\King_Heart.jpg" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Properties\imagini\King_Spade.jpg" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Properties\imagini\Queen_Club.jpg" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Properties\imagini\Queen_Diamond.jpg" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Properties\imagini\Queen_Heart.jpg" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Properties\imagini\Queen_Spade.jpg" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Properties\imagini\Spate_carte_joc.jpg" />
+  </ItemGroup>
+  <ItemGroup>
+    <Folder Include="bin\Debug\" />
+  </ItemGroup>
+  <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
+</Project>
