@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="ro">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Poker Arena - Lobby-uri</title>
+    <link rel="stylesheet" href="styles.css" />
+</head>
+
+<body>
+    <div class="container">
+        <nav class="nav">
+            <div class="logo">Poker Arena</div>
+            <div class="nav-links">
+                <a href="home.html">Acasa</a>
+                <a href="login.html">Login</a>
+                <a href="profile.html">Profil</a>
+            </div>
+        </nav>
+
+        <section class="split">
+            <div class="card">
+                <h2>Lobby-uri publice</h2>
+                <p class="muted">Cauta dupa nume sau cod.</p>
+                <input id="lobby-search" class="input" type="text" placeholder="Cauta lobby" />
+                <div id="lobby-list" class="lobby-list"></div>
+            </div>
+            <div class="card">
+                <h2>Creeaza lobby cu cod</h2>
+                <form class="form">
+                    <input class="input" type="text" placeholder="Nume lobby" />
+                    <input class="input" type="text" placeholder="Miza (ex: 5/10)" />
+                    <input class="input" type="number" placeholder="Max jucatori" />
+                    <button class="button" type="button">Genereaza cod</button>
+                </form>
+                <p class="muted">Codul generat apare in lobby si poate fi share-uit.</p>
+            </div>
+        </section>
+
+        <section class="card">
+            <h3>Intra cu cod</h3>
+            <div class="cta-row">
+                <input class="input" type="text" placeholder="Cod lobby" />
+                <a class="button alt" href="game.html">Intra acum</a>
+            </div>
+        </section>
+
+        <div class="footer">Lobby-urile se reimprospateaza la 10 sec.</div>
+    </div>
+    <script src="app.js"></script>
+</body>
+
+</html>
