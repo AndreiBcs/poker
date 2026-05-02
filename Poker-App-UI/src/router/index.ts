@@ -6,25 +6,33 @@ const router = createRouter({
     routes: [
         {
             path: '/',
-            redirect: '/lobby'
+            name: 'home',
+            component: () => import('@/views/HomeView.vue'),
+            meta: { requiresAuth: false }
         },
         {
             path: '/login',
             name: 'login',
             component: () => import('@/views/LoginView.vue'),
-            meta: { requireAuth: false}
+            meta: { requiresAuth: false}
+        },
+        {
+            path: '/register',
+            name: 'register',
+            component: () => import('@/views/RegisterView.vue'),
+            meta: { requiresAuth: false}
         },
         {
             path: '/lobby',
             name: 'lobby',
             component: () => import('@/views/LobbyView.vue'),
-            meta: { requireAuth: true}
+            meta: { requiresAuth: false}
         },
         {
             path: '/game/:roomId',
             name: 'game',
             component: () => import('@/views/GameView.vue'),
-            meta: { requireAuth: true}
+            meta: { requiresAuth: false}
         },
         {
             path: '/:pathMatch(.*)*',

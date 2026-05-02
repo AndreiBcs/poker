@@ -1,8 +1,7 @@
 <script setup lang="ts">
+import LoginModal from '@/components/auth/LoginModal.vue'
 </script>
 
 <template>
-  <main>
-    <h1>Login</h1>
-  </main>
+  <LoginModal />
 </template>
