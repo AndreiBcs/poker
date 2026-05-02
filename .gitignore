@@ -363,3 +363,27 @@ MigrationBackup/
 
 # Fody - auto-generated XML schema
 FodyWeavers.xsd
+
+# Build output
+bin/
+obj/
+
+# Visual Studio
+.vs/
+
+# User-specific files
+*.user
+*.suo
+*.userosscache
+*.sln.docstates
+
+# .NET generated files
+*.deps.json
+*.runtimeconfig.json
+*.pdb
+*.dll
+*.exe
+*.cache.json
+*.sourcelink.json
+*.g.props
+*.g.targets
