@@ -19,7 +19,7 @@ namespace GameService.Providers
                     CurrentBet: p.CurrentBet,
                     HasFolded: p.HasFolded,
                     IsAllIn: p.IsAllIn,
-                    // THE MAGIC TRICK: Hide cards if the ID doesn't match!
+                   
                     HoleCards: p.Id == viewerPlayerId ? p.HoleCards : new List<Card>() 
                 )).ToList()
             );

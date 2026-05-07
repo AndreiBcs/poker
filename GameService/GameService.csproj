@@ -7,6 +7,8 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <PackageReference Include="HoldemPoker.Cards" Version="0.0.1" />
+    <PackageReference Include="HoldemPoker.Evaluator" Version="1.0.1" />
     <PackageReference Include="Microsoft.AspNetCore.OpenApi" Version="10.0.0" />
   </ItemGroup>
 
