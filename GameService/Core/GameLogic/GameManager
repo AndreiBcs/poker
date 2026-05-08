@@ -1,0 +1,59 @@
+using System;
+using System.Collections.Concurrent;
+using System.Collections.Generic;
+using GameService.State;
+
+namespace GameService.Core
+{
+    public class GameManager : IGameManager
+    {
+        // Thread-safe dictionary to hold active games in memory
+        private readonly ConcurrentDictionary<string, Table> _tables = new();
+
+        public Table CreateRoom(string roomId)
+        {
+            var table = new Table(roomId);
+            _tables.TryAdd(roomId, table);
+            return table;
+        }
+
+        public Table JoinRoom(string roomId, Player player)
+        {
+            if (_tables.TryGetValue(roomId, out var table))
+            {
+                table.Players.Add(player);
+                return table;
+            }
+            return null;
+        }
+
+        public Table GetTable(string roomId)
+        {
+            _tables.TryGetValue(roomId, out var table);
+            return table;
+        }
+
+        public bool PlaceBet(string roomId, string playerId, int amount)
+        {
+            // TODO: Implement betting logic
+            return true;
+        }
+
+        public bool Fold(string roomId, string playerId)
+        {
+            // TODO: Implement fold logic
+            return true;
+        }
+
+        public bool Check(string roomId, string playerId)
+        {
+            // TODO: Implement check logic
+            return true;
+        }
+
+        public void AdvancePhase(string roomId)
+        {
+            // TODO: Implement GameStateMachine transition
+        }
+    }
+}

@@ -1,8 +1,7 @@
 using Microsoft.Extensions.DependencyInjection;
-using GameService.Core;
-using GameService.Core.GameLogic;
-using GameService.State.Interfaces;
-using GameService.Providers;
+using GameService.Core; // For IGameManager, GameManager
+// If GameRepository doesn't exist yet, we will map it temporarily to dynamic or comment it out if not implemented
+// using GameService.Data; 
 
 namespace GameService.Dependencies
 {
@@ -11,19 +10,12 @@ namespace GameService.Dependencies
         public static IServiceCollection AddGameServices(this IServiceCollection services)
         {
             
-            services.AddSingleton<IGameManager, GameManager>(); 
-            
-          
-            services.AddTransient<ITableStateDtoProvider, TableStateDtoProvider>(); 
-            services.AddTransient<IHandEvaluator, HandEvaluator>(); 
-
             return services;
         }
         
         public static IServiceCollection AddRepositories(this IServiceCollection services)
         {
-      
-            services.AddScoped<IGameRepository, GameRepository>();
+           
             return services;
         }
     }

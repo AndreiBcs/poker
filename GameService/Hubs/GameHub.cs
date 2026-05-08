@@ -1,27 +1,29 @@
+
+
+using System.Threading.Tasks;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.SignalR;
-using GameService.Providers.Interfaces;
-using GameService.Core; // Assuming GameManager is here
+using GameService.State.Interfaces; // Updated namespace
+using GameService.Core;
+using GameService.State;
 
-[Authorize]
-public class GameHub(GameManager gameManager, ITableStateDtoProvider tableStateDtoProvider) : Hub
+namespace GameService.Hubs 
 {
-    private readonly GameManager _gameManager = gameManager;
-    private readonly ITableStateDtoProvider _tableStateDtoProvider = tableStateDtoProvider;
-
-    public async Task PlaceBet(string roomId, int amount)
+    [Authorize]
+    public class GameHub(IGameManager gameManager, ITableStateDtoProvider tableStateDtoProvider) : Hub
     {
-        
-        Table tableState = _gameManager.GetTable(roomId);
+        private readonly IGameManager _gameManager = gameManager;
+        private readonly ITableStateDtoProvider _tableStateDtoProvider = tableStateDtoProvider;
 
-        
-        foreach (var player in tableState.Players)
+        public async Task PlaceBet(string roomId, int amount)
         {
-            
-            var safeDto = _tableStateDtoProvider.BuildTableStateDto(tableState, player.Id);
-            
-           
-            await Clients.User(player.Id).SendAsync("StateUpdated", safeDto);
+            Table tableState = _gameManager.GetTable(roomId);
+
+            foreach (var player in tableState.Players)
+            {
+                var safeDto = _tableStateDtoProvider.BuildTableStateDto(tableState, player.Id);
+                await Clients.User(player.Id).SendAsync("StateUpdated", safeDto);
+            }
         }
     }
 }

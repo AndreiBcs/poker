@@ -1,4 +1,11 @@
 using GameService.Hubs;
+using GameService.Core;
+using Scalar.AspNetCore;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.IdentityModel.Tokens;
+using System.Text;
+using GameService.Dependencies; 
+         
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -9,12 +16,11 @@ builder.Services.AddCors(options =>
 {
     options.AddDefaultPolicy(policy =>
     {
-        // This dynamically accepts your Live Server (or any local port) 
-        // without using the forbidden wildcard '*'
+       
         policy.SetIsOriginAllowed(origin => true) 
               .AllowAnyHeader()
               .AllowAnyMethod()
-              .AllowCredentials(); // SignalR strictly requires this!
+              .AllowCredentials();
     });
 });
 
@@ -63,15 +69,17 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
 
     });
     
+builder.Services.AddOpenApi();
 builder.Services.AddGameServices().AddRepositories();
 builder.Services.AddAuthorization();
-builder.Services.AddSingleton<GameManager>();
+
 var app = builder.Build();
 app.UseCors();
 
 app.UseAuthentication(); 
 app.UseAuthorization();
-
+app.MapOpenApi();
+app.MapScalarApiReference();
 
 
 
@@ -84,5 +92,7 @@ if (app.Environment.IsDevelopment())
 app.UseHttpsRedirection();
 
 app.MapHub<GameHub>("/gamehub");
+app.MapGet("/", () => "Poker GameService Backend is running and ready for connections!");
 
 app.Run();
+

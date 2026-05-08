@@ -1,5 +1,4 @@
 using GameService.DTOs;
-using GameService.State;
 
 namespace GameService.State.Interfaces
 {

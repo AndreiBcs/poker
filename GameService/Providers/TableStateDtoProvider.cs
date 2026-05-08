@@ -1,6 +1,9 @@
+using System.Linq;
+using System.Collections.Generic;
 using GameService.State;
 using GameService.DTOs;
-using GameService.Providers.Interfaces;
+using GameService.State.Interfaces; // Updated namespace
+using GameService.Core.GameLogic;
 
 namespace GameService.Providers
 {
@@ -19,7 +22,6 @@ namespace GameService.Providers
                     CurrentBet: p.CurrentBet,
                     HasFolded: p.HasFolded,
                     IsAllIn: p.IsAllIn,
-                   
                     HoleCards: p.Id == viewerPlayerId ? p.HoleCards : new List<Card>() 
                 )).ToList()
             );

@@ -1,6 +1,8 @@
 using System.Collections.Generic;
+using System.Linq;
 using HoldemPoker.Evaluator;
-using GameService.State.Interfaces; // Use the new interface location
+using GameService.State.Interfaces;
+using GameService.State;
 
 namespace GameService.Core.GameLogic
 {
@@ -8,18 +10,42 @@ namespace GameService.Core.GameLogic
     {
         public int EvaluateScore(List<Card> holeCards, List<Card> board)
         {
-           
-            return HoldemHandEvaluator.GetHandRanking(holeCards, board);
+            var pCards = MapCards(holeCards).ToArray();
+            var bCards = MapCards(board).ToArray();
+            // Assuming the method takes arrays of cards or comma-separated strings. 
+            // If it takes a single combined array:
+            return HoldemHandEvaluator.GetHandRanking(pCards.Concat(bCards).ToArray());
         }
 
         public string GetHandCategory(List<Card> holeCards, List<Card> board)
         {
-            return HoldemHandEvaluator.GetHandCategory(holeCards, board).ToString();
+            var pCards = MapCards(holeCards).ToArray();
+            var bCards = MapCards(board).ToArray();
+            return HoldemHandEvaluator.GetHandCategory(pCards.Concat(bCards).ToArray()).ToString();
         }
 
         public string GetHandDescription(List<Card> holeCards, List<Card> board)
         {
-            return HoldemHandEvaluator.GetHandDescription(holeCards, board);
+            var pCards = MapCards(holeCards).ToArray();
+            var bCards = MapCards(board).ToArray();
+            return HoldemHandEvaluator.GetHandDescription(pCards.Concat(bCards).ToArray());
+        }
+
+        
+        private IEnumerable<HoldemPoker.Cards.Card> MapCards(List<Card> cards)
+        {
+            return cards.Select(c => 
+            {
+               
+                string rankString = c.Rank switch
+                {
+                    Rank.Ten => "T", Rank.Jack => "J", Rank.Queen => "Q", Rank.King => "K", Rank.Ace => "A",
+                    _ => ((int)c.Rank).ToString()
+                };
+                string suitString = c.Suit.ToString()[0].ToString().ToLower(); 
+                
+                return HoldemPoker.Cards.Card.Parse($"{rankString}{suitString}");
+            });
         }
     }
 }
