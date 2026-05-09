@@ -12,8 +12,7 @@ namespace GameService.Core.GameLogic
         {
             var pCards = MapCards(holeCards).ToArray();
             var bCards = MapCards(board).ToArray();
-            // Assuming the method takes arrays of cards or comma-separated strings. 
-            // If it takes a single combined array:
+         
             return HoldemHandEvaluator.GetHandRanking(pCards.Concat(bCards).ToArray());
         }
 

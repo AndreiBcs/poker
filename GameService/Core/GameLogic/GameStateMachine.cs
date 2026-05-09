@@ -90,7 +90,7 @@ namespace GameService.Core.GameLogic
               
                 var bestScore = 0;
                 Player?winner = null;
-
+                List<Player> winners = new List<Player>();
                 foreach (var player in activePlayers)
                 {
                     var score = _handEvaluator.EvaluateScore(player.HoleCards, table.BoardCards);
@@ -98,14 +98,49 @@ namespace GameService.Core.GameLogic
                     {
                         bestScore = score;
                         winner = player;
+                        winners.Clear();
+                        winners.Add(player);
+                    }
+                    else if(score == bestScore)
+                    {
+                        winners.Add(player);
+                    }
+
+
+                }
+                 
+                 if (winners.Count == 1)
+                {
+                    winners[0].Chips += table.Pot;
+                }
+                else if (winners.Count > 1)
+                {
+                    int splitPot = table.Pot / winners.Count;
+                    int oddChips = table.Pot % winners.Count; 
+
+                  
+                    foreach(var p in winners)
+                    {
+                        p.Chips += splitPot;
+                    }
+
+                   
+                    if (oddChips > 0)
+                    {
+                        var oddChipWinner = winners.OrderBy(w => 
+                        {
+                            int playerIndex = table.Players.IndexOf(w);
+                       
+                            int distance = (playerIndex - table.DealerIndex + table.Players.Count) % table.Players.Count;
+                            
+                         
+                            return distance == 0 ? table.Players.Count : distance;
+                        }).First();
+
+                        oddChipWinner.Chips += oddChips;
                     }
                 }
-
-                if (winner != null)
-                {
-                     //TODO: fa si cazul in care e egal nu doar cand unul din cei doi castig
-                    winner.Chips += table.Pot;
-                }
+             
             }
 
             table.Pot = 0;

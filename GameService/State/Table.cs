@@ -12,6 +12,7 @@ namespace GameService.State
         public List<Player> Players { get; set; } = new List<Player>();
         public int CurrentPlayerIndex { get; set; }
         public Deck CurrentDeck { get; set; }=new Deck();
+        public int DealerIndex { get; set; }
 
         public Table(string roomId)
         {
