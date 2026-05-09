@@ -1,4 +1,3 @@
-using Microsoft.EntityFrameworkCore;
 using UserService.Domain;
 using UserService.Domain.Interfaces;
 using UserService.Infrastructure.Persistence;
@@ -9,9 +8,6 @@ namespace UserService.Infrastructure.Repositories
     {
         public async Task<User?> GetUserById(Guid id) =>
             await db.Users.FindAsync(id);
-
-        public async Task<User?> GetUserByUsername(string username) =>
-            await db.Users.FirstOrDefaultAsync(u => u.Username == username);
 
         public async Task<User> CreateUser(User user)
         {

@@ -1,4 +1,5 @@
 using UserService.Domain.Interfaces;
+using UserService.Infrastructure.Messaging;
 
 namespace UserService.Features.User
 {
@@ -8,12 +9,12 @@ namespace UserService.Features.User
         public async Task<UserResponseDTO?> GetUserAsync(Guid id) =>
             (await repo.GetUserById(id))?.ToUserResponse();
 
-        public async Task<UserResponseDTO> CreateUserAsync(CreateUserDTO dto)
+        public async Task<UserResponseDTO> CreateUserAsync(Guid id, string username)
         {
             var user = new Domain.User
             {
-                Id = Guid.NewGuid(),
-                Username = dto.Username,
+                Id = id,
+                Username = username,
                 CreatedAt = DateTime.UtcNow
             };
 

@@ -21,7 +21,7 @@ namespace UserService.Features.User
             });
 
 
-            group.MapPut("/update-user/{id:guid}", async Task<Results<Ok<UserResponseDTO>, NotFound, Conflict<string>, ValidationProblem>> 
+            group.MapPut("/{id:guid}", async Task<Results<Ok<UserResponseDTO>, NotFound, Conflict<string>, ValidationProblem>> 
                 (Guid id, UpdateUserDTO dto, IValidator<UpdateUserDTO> validator, IUserService service) =>
             {
                 var validation = await validator.ValidateAsync(dto);
@@ -35,7 +35,7 @@ namespace UserService.Features.User
             });
 
 
-            group.MapDelete("/delete-user/{id:guid}", async Task<Results<NoContent, NotFound>> 
+            group.MapDelete("/{id:guid}", async Task<Results<NoContent, NotFound>> 
                 (Guid id, IUserService service) =>
                 await service.DeleteUserAsync(id)
                     ? TypedResults.NoContent()

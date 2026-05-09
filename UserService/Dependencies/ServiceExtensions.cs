@@ -1,10 +1,8 @@
-using System.Text;
 using FluentValidation;
-using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.IdentityModel.Tokens;
 using UserService.Domain.Interfaces;
 using UserService.Features.User;
+using UserService.Infrastructure.Messaging;
 using UserService.Infrastructure.Persistence;
 using UserService.Infrastructure.Repositories;
 
@@ -38,25 +36,11 @@ namespace UserService.Dependencies
             return services;
         }
 
-        public static IServiceCollection AddAuth(this IServiceCollection services, IConfiguration config)
+        public static IServiceCollection AddMessaging(this IServiceCollection services, IConfiguration config)
         {
-
-            services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
-                .AddJwtBearer(options =>
-                {
-                    options.TokenValidationParameters = new TokenValidationParameters
-                    {
-                        ValidateIssuer           = true,
-                        ValidateAudience         = true,
-                        ValidateLifetime         = true,
-                        ValidateIssuerSigningKey = true,
-                        ValidIssuer              = config["Jwt:Issuer"],
-                        ValidAudience            = config["Jwt:Audience"],
-                        IssuerSigningKey         = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(config["Jwt:Secret"]!))
-                    };
-                });
-
-            services.AddAuthorization();
+            services.Configure<RabbitMqOptions>(config.GetSection(RabbitMqOptions.Section));
+            services.AddSingleton<IMessagePublisher, RabbitMqPublisher>();
+            services.AddHostedService<MessageConsumer>();
             return services;
         }
     }
