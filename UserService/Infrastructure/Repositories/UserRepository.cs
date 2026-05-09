@@ -7,9 +7,6 @@ namespace UserService.Infrastructure.Repositories
 {
     public class UserRepository(AppDbContext db) : IUserRepository
     {
-        public async Task<User?> GetUserByEmail(string email) =>
-            await db.Users.FirstOrDefaultAsync(u => u.Email == email);
-
         public async Task<User?> GetUserById(Guid id) =>
             await db.Users.FindAsync(id);
 
