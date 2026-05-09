@@ -1,7 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using Scalar.AspNetCore;
 using UserService.Dependencies;
-using UserService.Features.Auth;
 using UserService.Features.User;
 using UserService.Infrastructure.Persistence;
 
@@ -11,9 +10,8 @@ builder.Services.AddDatabase(builder.Configuration)
                 .AddRepositories()
                 .AddServices()
                 .AddValidators()
-                .AddOpenApi()
-                .AddAuth(builder.Configuration)
-                .AddRateLimiting();   
+                .AddMessaging(builder.Configuration)
+                .AddOpenApi();
 
 var app = builder.Build();
 
@@ -23,15 +21,11 @@ using (var scope = app.Services.CreateScope())
     db.Database.Migrate();
 }
 
-app.UseAuthentication();
-app.UseAuthorization();
-
-app.UseRateLimiter();
+if (app.Environment.IsDevelopment())
+{
+    app.MapOpenApi();
+    app.MapScalarApiReference();
+}
 
 app.MapUserEndpoints();
-app.MapAuthEndpoints();
-
-app.MapOpenApi();
-app.MapScalarApiReference();
-
 app.Run();
