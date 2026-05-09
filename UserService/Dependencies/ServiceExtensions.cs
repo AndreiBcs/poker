@@ -2,7 +2,7 @@ using FluentValidation;
 using Microsoft.EntityFrameworkCore;
 using UserService.Domain.Interfaces;
 using UserService.Features.User;
-using UserService.Infrastructure.Messaging;
+using Messaging.Extensions;
 using UserService.Infrastructure.Persistence;
 using UserService.Infrastructure.Repositories;
 
@@ -38,9 +38,8 @@ namespace UserService.Dependencies
 
         public static IServiceCollection AddMessaging(this IServiceCollection services, IConfiguration config)
         {
-            services.Configure<RabbitMqOptions>(config.GetSection(RabbitMqOptions.Section));
-            services.AddSingleton<IMessagePublisher, RabbitMqPublisher>();
-            services.AddHostedService<MessageConsumer>();
+            services.AddRabbitMq(config);
+            services.AddHostedService<UserRegisteredConsumer>();
             return services;
         }
     }
