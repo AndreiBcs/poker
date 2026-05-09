@@ -7,6 +7,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "UserService", "UserService\
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "GameService", "GameService\GameService.csproj", "{462E941C-EAE9-4C2B-9DB8-CFC625EAFA3E}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "LobbyService", "LobbyService\LobbyService.csproj", "{21CC7249-9BD2-436A-A721-B118A814DD89}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -41,6 +43,18 @@ Global
 		{462E941C-EAE9-4C2B-9DB8-CFC625EAFA3E}.Release|x64.Build.0 = Release|Any CPU
 		{462E941C-EAE9-4C2B-9DB8-CFC625EAFA3E}.Release|x86.ActiveCfg = Release|Any CPU
 		{462E941C-EAE9-4C2B-9DB8-CFC625EAFA3E}.Release|x86.Build.0 = Release|Any CPU
+		{21CC7249-9BD2-436A-A721-B118A814DD89}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{21CC7249-9BD2-436A-A721-B118A814DD89}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{21CC7249-9BD2-436A-A721-B118A814DD89}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{21CC7249-9BD2-436A-A721-B118A814DD89}.Debug|x64.Build.0 = Debug|Any CPU
+		{21CC7249-9BD2-436A-A721-B118A814DD89}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{21CC7249-9BD2-436A-A721-B118A814DD89}.Debug|x86.Build.0 = Debug|Any CPU
+		{21CC7249-9BD2-436A-A721-B118A814DD89}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{21CC7249-9BD2-436A-A721-B118A814DD89}.Release|Any CPU.Build.0 = Release|Any CPU
+		{21CC7249-9BD2-436A-A721-B118A814DD89}.Release|x64.ActiveCfg = Release|Any CPU
+		{21CC7249-9BD2-436A-A721-B118A814DD89}.Release|x64.Build.0 = Release|Any CPU
+		{21CC7249-9BD2-436A-A721-B118A814DD89}.Release|x86.ActiveCfg = Release|Any CPU
+		{21CC7249-9BD2-436A-A721-B118A814DD89}.Release|x86.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
