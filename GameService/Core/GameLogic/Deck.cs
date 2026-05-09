@@ -19,7 +19,13 @@ namespace GameService.Core.GameLogic
                 deck.Add(new Card(s, r));
            
             var rng = new Random();
-            _cards = new Stack<Card>(deck.OrderBy(_ => rng.Next()));
+          
+            for (int i = deck.Count - 1; i > 0; i--)
+            {
+              int j = rng.Next(i + 1);
+              (deck[i], deck[j]) = (deck[j], deck[i]);
+            }
+            _cards = new Stack<Card>(deck);
         }
 
         public Card Draw() => _cards.Pop();

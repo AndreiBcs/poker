@@ -16,5 +16,12 @@ namespace GameService.State
         public bool HasFolded { get; set; } = false;
         public bool IsAllIn { get; set; } = false;
         public List<Card> HoleCards { get; set; } = new();
+        public void ResetForNewHand()
+        {
+            CurrentBet = 0;
+            HasFolded = false;
+            IsAllIn = false;
+            HoleCards.Clear();
+        }
     }
 }

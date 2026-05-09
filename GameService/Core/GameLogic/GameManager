@@ -2,14 +2,19 @@ using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using GameService.State;
+using GameService.Core.GameLogic;
 
 namespace GameService.Core
 {
-    public class GameManager : IGameManager
+    public class GameManager : IGameStateMachine
     {
-        // Thread-safe dictionary to hold active games in memory
+       
         private readonly ConcurrentDictionary<string, Table> _tables = new();
-
+        private readonly IGameStateMachine _gameStateMachine;
+        public GameManager(IGameStateMachine gameStateMachine)
+        {
+            _gameStateMachine = gameStateMachine;
+        }
         public Table CreateRoom(string roomId)
         {
             var table = new Table(roomId);
