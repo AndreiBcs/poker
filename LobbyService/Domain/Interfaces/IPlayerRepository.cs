@@ -4,6 +4,6 @@ namespace LobbyService.Domain.Interfaces
     {
         Task<Player?> GetPlayerAsync(Guid id);
         Task AddPlayerAsync(Player player);
-        Task RemovePlayerAsync(Guid lobbyId, Guid userId);
+        Task RemovePlayerAsync( Guid id);
     }
 }

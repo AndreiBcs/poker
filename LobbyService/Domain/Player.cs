@@ -4,6 +4,6 @@ namespace LobbyService.Domain
     {
         public Guid Id { get; init; }
         public string Username { get; init; } = null!;
-        public bool IsHost { get; set; }
+        public bool IsReady { get; set; }
     }
 }

@@ -1,6 +1,7 @@
 using LobbyService.Domain;
 using LobbyService.Domain.Interfaces;
 using LobbyService.Infrastructure.Persistence;
+using Microsoft.EntityFrameworkCore;
 
 namespace LobbyService.Infrastructure.Repositories
 {
@@ -13,12 +14,12 @@ namespace LobbyService.Infrastructure.Repositories
         }
 
         public async  Task<Player?> GetPlayerAsync(Guid id) =>
-            await db.Players.FirstOrDefaultAsync(p => p.Id == id);
+            await db.Players.FindAsync(id);
 
 
-        public async Task RemovePlayerAsync(Guid lobbyId, Guid userId)
+        public async Task RemovePlayerAsync(Guid id)
         {
-            var player = await GetPlayerAsync(userId);
+            var player = await GetPlayerAsync(id);
             if (player is not null)
             {
                 db.Players.Remove(player);

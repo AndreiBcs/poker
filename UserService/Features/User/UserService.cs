@@ -1,5 +1,4 @@
 using UserService.Domain.Interfaces;
-using UserService.Infrastructure.Messaging;
 
 namespace UserService.Features.User
 {
