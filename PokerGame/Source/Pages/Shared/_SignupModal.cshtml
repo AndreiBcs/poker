@@ -1,0 +1,23 @@
+@model Source.Pages.IndexModel
+
+<div id="signupModal" class="modal" style="display:none;">
+    <div class="modal-content">
+        <h2>Sign Up</h2>
+
+        <form method="post" asp-page-handler="Signup">
+            <div asp-validation-summary="ModelOnly"></div>
+
+            <input asp-for="Signup.Username" placeholder="Username" />
+            <span asp-validation-for="Signup.Username"></span>
+
+            <input asp-for="Signup.Email" type="email" placeholder="Email" />
+            <span asp-validation-for="Signup.Email"></span>
+
+            <input asp-for="Signup.Password" type="password" placeholder="Password" />
+            <span asp-validation-for="Signup.Password"></span>
+
+            <button type="submit">Create Account</button>
+            <button type="button" onclick="closeSignup()">Close</button>
+        </form>
+    </div>
+</div>

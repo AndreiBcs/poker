@@ -1,0 +1,42 @@
+@page
+@model IndexModel
+
+@{
+    ViewData["Title"] = "Game";
+}
+
+<div class="game-container">
+
+    @if (!string.IsNullOrWhiteSpace(Model.StatusMessage))
+    {
+        <div class="status-message">@Model.StatusMessage</div>
+    }
+
+    @if (Model.LobbyId.HasValue)
+    {
+        <div class="lobby-banner">Lobby @Model.LobbyId.Value</div>
+    }
+
+    <div class="table-background">
+        <img src="/images/poker-table.png" class="poker-table" />
+    </div>
+
+    <div class="ui-overlay">
+        <button onclick="toggleActions()">Actions</button>
+
+        <div id="actionsPanel" style="display:none;">
+            <button>Check</button>
+            <button>Call</button>
+            <button>Raise</button>
+            <button>Fold</button>
+        </div>
+    </div>
+
+</div>
+
+<script>
+function toggleActions() {
+    const panel = document.getElementById("actionsPanel");
+    panel.style.display = panel.style.display === "none" ? "block" : "none";
+}
+</script>

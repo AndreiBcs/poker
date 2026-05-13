@@ -1,0 +1,68 @@
+@page
+@model IndexModel
+
+@{
+    ViewData["Title"] = "Lobby";
+}
+
+<h1>Lobby</h1>
+
+@if (!string.IsNullOrWhiteSpace(Model.StatusMessage))
+{
+    <div class="status-message">@Model.StatusMessage</div>
+}
+
+<div class="lobby-container">
+
+    <div class="lobby-list">
+        <h2>Available Lobbies</h2>
+
+        @if (Model.Lobbies.Count == 0)
+        {
+            <p>No lobbies yet. Create one to get started.</p>
+        }
+        else
+        {
+            foreach (var lobby in Model.Lobbies)
+            {
+                <div class="lobby-card">
+                    <div>
+                        <div class="lobby-title">@lobby.Name</div>
+                        <div>@lobby.CurrentPlayers/@lobby.MaxPlayers players</div>
+                        <div>Blinds: @lobby.SmallBlind / @lobby.BigBlind</div>
+                    </div>
+                    <form method="post" asp-page-handler="Join" asp-route-id="@lobby.Id">
+                        <button type="submit" @(lobby.IsFull ? "disabled" : "")>Join</button>
+                    </form>
+                </div>
+            }
+        }
+    </div>
+
+    <div class="create-lobby">
+        <h2>Create Lobby</h2>
+
+        <form method="post" asp-page-handler="Create">
+            <div asp-validation-summary="ModelOnly"></div>
+
+            <label asp-for="CreateLobby.MaxPlayers"></label>
+            <input asp-for="CreateLobby.MaxPlayers" type="number" min="2" max="10" />
+            <span asp-validation-for="CreateLobby.MaxPlayers"></span>
+
+            <label asp-for="CreateLobby.SmallBlind"></label>
+            <input asp-for="CreateLobby.SmallBlind" type="number" min="1" />
+            <span asp-validation-for="CreateLobby.SmallBlind"></span>
+
+            <label asp-for="CreateLobby.BigBlind"></label>
+            <input asp-for="CreateLobby.BigBlind" type="number" min="1" />
+            <span asp-validation-for="CreateLobby.BigBlind"></span>
+
+            <button type="submit">Create</button>
+        </form>
+    </div>
+
+</div>
+
+@section Scripts {
+    <partial name="Shared/_ValidationScriptsPartial" />
+}

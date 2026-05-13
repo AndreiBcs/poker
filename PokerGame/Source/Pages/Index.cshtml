@@ -1,10 +1,38 @@
 ﻿@page
 @model IndexModel
 @{
-    ViewData["Title"] = "Home page";
+    ViewData["Title"] = "Poker";
 }
 
-<div class="text-center">
-    <h1 class="display-4">Welcome</h1>
-    <p>Learn about <a href="https://learn.microsoft.com/aspnet/core">building Web apps with ASP.NET Core</a>.</p>
+<div class="welcome-container">
+    <h1>Welcome to Poker App</h1>
+
+    <div class="buttons">
+        <button onclick="openLogin()">Login</button>
+        <button onclick="openSignup()">Sign Up</button>
+    </div>
 </div>
+
+<partial name="Shared/_LoginModal" model="Model" />
+<partial name="Shared/_SignupModal" model="Model" />
+
+@section Scripts {
+    <partial name="Shared/_ValidationScriptsPartial" />
+    <script>
+        function openLogin() {
+            document.getElementById("loginModal").style.display = "block";
+        }
+
+        function closeLogin() {
+            document.getElementById("loginModal").style.display = "none";
+        }
+
+        function openSignup() {
+            document.getElementById("signupModal").style.display = "block";
+        }
+
+        function closeSignup() {
+            document.getElementById("signupModal").style.display = "none";
+        }
+    </script>
+}
