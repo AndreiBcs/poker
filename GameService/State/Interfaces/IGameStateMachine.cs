@@ -1,14 +1,11 @@
-using System.Linq;
 using GameService.State;
-using GameService.State.Interfaces;
-using GameService.Core.GameLogic;
 
-namespace GameService.Core
+namespace GameService.Core.GameLogic
 {
     public interface IGameStateMachine
     {
+        GameType SupportedGameType { get; } 
         void StartNewHand(Table table);
-        void  AdvancePhase(Table table);
-        
+        void AdvancePhase(Table table);
     }
 }

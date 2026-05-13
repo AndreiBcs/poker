@@ -15,7 +15,9 @@ namespace GameService.Dependencies
             services.AddSingleton<IGameStateMachine, GameStateMachine>(); 
 
         
-            services.AddTransient<IGameStateMachine, GameStateMachine>();
+           
+            services.AddTransient<IGameStateMachine, TexasHoldemStateMachine>();
+            services.AddTransient<IGameStateMachine, FiveCardDrawStateMachine>();
             services.AddTransient<IHandEvaluator, HandEvaluator>();
             services.AddTransient<ITableStateDtoProvider, TableStateDtoProvider>();
 

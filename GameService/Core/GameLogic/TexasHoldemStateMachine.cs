@@ -5,12 +5,13 @@ using GameService.State.Interfaces;
 
 namespace GameService.Core.GameLogic
 {
-    public class GameStateMachine : IGameStateMachine
+
+    public class TexasHoldemStateMachine : IGameStateMachine
     {
         private readonly IHandEvaluator _handEvaluator;
         
-
-        public GameStateMachine(IHandEvaluator handEvaluator)
+       public GameType SupportedGameType => GameType.TexasHoldem;
+        public TexasHoldemStateMachine(IHandEvaluator handEvaluator)
         {
             _handEvaluator = handEvaluator;
             

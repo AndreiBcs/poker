@@ -18,7 +18,7 @@ namespace GameService.Core
 
     public interface IGameManager : IGameRoomService, IPlayerActionService
     {
-        
+        bool DiscardCards(string roomId,string playerId,List<int> cardIndexesToDiscard);
         void AdvancePhase(string roomId);
     }
 }

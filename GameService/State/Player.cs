@@ -18,10 +18,11 @@ namespace GameService.State
         public List<Card> HoleCards { get; set; } = new();
         public void ResetForNewHand()
         {
+            HoleCards.Clear();
             CurrentBet = 0;
             HasFolded = false;
             IsAllIn = false;
-            HoleCards.Clear();
+            HasDrawnCards=false;
         }
     }
 }

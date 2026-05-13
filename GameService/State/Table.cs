@@ -13,6 +13,7 @@ namespace GameService.State
         public int CurrentPlayerIndex { get; set; }
         public Deck CurrentDeck { get; set; }=new Deck();
         public int DealerIndex { get; set; }
+        public GameType GameType { get; set; } = GameType.TexasHoldem;
 
         public Table(string roomId)
         {

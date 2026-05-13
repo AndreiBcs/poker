@@ -25,5 +25,23 @@ namespace GameService.Hubs
                 await Clients.User(player.Id).SendAsync("StateUpdated", safeDto);
             }
         }
+        public async Task DiscardCards(string roomId, List<int> cardIndexesToDiscard)
+        {
+            string playerId = Context.UserIdentifier?? ContextBoundObject.ConnectionId;
+            bool success = _gameManager.DiscardCards(roomId, playerId, cardIndexesToDiscard);
+            if (!success)
+            {
+                await Clients.Caller.SendAsync("Error", "Invalid discard action.");
+                return;
+            }
+
+            Table tableState = _gameManager.GetTable(roomId);
+
+            foreach (var player in tableState.Players)
+            {
+                var safeDto = _tableStateDtoProvider.BuildTableStateDto(tableState, player.Id);
+                await Clients.User(player.Id).SendAsync("StateUpdated", safeDto);
+            }
+        }
     }
 }
