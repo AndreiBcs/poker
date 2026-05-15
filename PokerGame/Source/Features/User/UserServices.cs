@@ -42,7 +42,7 @@ namespace Source.Features.User
 
                 return user;
             }
-            catch (Exception ex)
+            catch (Exception)
             {
                 await transaction.RollbackAsync();
                 return null;
@@ -62,29 +62,41 @@ namespace Source.Features.User
             return user;
         }
 
-        public async Task<bool> UpdateUserEmailAsync(Guid userId, string newEmail)
+
+
+        public async Task<Domain.Entities.User?> UpdateUserAsync(Guid userId, UserUpdateRequest dto)
         {
-            // Simulate updating user email
-            await Task.Delay(100); // Simulate async operation
-            return true; // Assume update is successful
-        }
+            var user = await db.Users.FindAsync(userId);
 
+            if (user is null) return null;
 
+            if(string.IsNullOrWhiteSpace(dto.Username) 
+                || string.IsNullOrWhiteSpace(dto.Email) 
+                || string.IsNullOrWhiteSpace(dto.Password))
+            {
+                return null;
+            }
 
-        public async Task<bool> UpdateUserPasswordAsync(Guid userId, string newPassword)
-        {
-            // Simulate updating user password
-            await Task.Delay(100); // Simulate async operation
-            return true; // Assume update is successful
-        }
+            await using var transaction = await db.Database.BeginTransactionAsync();
 
+            try
+            {
+                user.Username = dto.Username;
+                user.Email = dto.Email;
+                user.PasswordHash = BCrypt.Net.BCrypt.HashPassword(dto.Password);
 
+                db.Users.Update(user);
+                await db.SaveChangesAsync();
+                await transaction.CommitAsync();
 
-        public async Task<bool> UpdateUsernameAsync(Guid userId, string newUsername)
-        {
-            // Simulate updating username
-            await Task.Delay(100); // Simulate async operation
-            return true; // Assume update is successful
+                return user;
+            }
+            catch (Exception)
+            {
+                await transaction.RollbackAsync();
+                
+                return null;
+            }
         }
 
 
@@ -109,7 +121,7 @@ namespace Source.Features.User
 
                 return true;
             }
-            catch(Exception ex)
+            catch (Exception)
             {
                 await transaction.RollbackAsync();
 

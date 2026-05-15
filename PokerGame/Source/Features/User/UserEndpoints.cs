@@ -38,28 +38,12 @@ namespace Source.Features.User
 
 
 
-            group.MapPut("/{userId:guid}/email", async (Guid userId, UserEmailUpdateRequest request, UserServices userService) =>
+            group.MapPut("/{userId:guid}", async Task<Results<NoContent, NotFound>>(Guid userId, UserUpdateRequest dto, UserServices userService) =>
             {
-                var success = await userService.UpdateUserEmailAsync(userId, request.NewEmail);
-                return success ? Results.NoContent() : Results.NotFound();
+                var user = await userService.UpdateUserAsync(userId, dto);
+
+                return user is not null ? TypedResults.NoContent() : TypedResults.NotFound();
             });
-
-
-
-            group.MapPut("/{userId:guid}/password", async (Guid userId, UserPasswordUpdateRequest request, UserServices userService) =>
-            {
-                var success = await userService.UpdateUserPasswordAsync(userId, request.NewPassword);
-                return success ? Results.NoContent() : Results.NotFound();
-            });
-
-
-
-            group.MapPut("/{userId:guid}/username", async (Guid userId, UserUsernameUpdateRequest request, UserServices userService) =>
-            {
-                var success = await userService.UpdateUsernameAsync(userId, request.NewUsername);
-                return success ? Results.NoContent() : Results.NotFound();
-            });
-
 
 
             group.MapDelete("/{userId:guid}", async Task<Results<NoContent, NotFound>>(Guid userId, UserServices userService) =>
