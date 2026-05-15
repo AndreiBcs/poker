@@ -5,34 +5,55 @@
 }
 
 <div class="welcome-container">
-    <h1>Welcome to Poker App</h1>
+    <h1 class="logo">Play Poker</h1>
 
     <div class="buttons">
-        <button onclick="openLogin()">Login</button>
-        <button onclick="openSignup()">Sign Up</button>
+        <button class="login-btn" onclick="openLogin()">Login</button>
+        <div class="register-dialog">
+            <p class="register-text">Don't have an account? </p>
+            <button class="register-btn" onclick="openSignup()">Register</button>
+        </div>
     </div>
 </div>
 
 <partial name="Shared/_LoginModal" model="Model" />
 <partial name="Shared/_SignupModal" model="Model" />
 
+<div id="modalBackdrop" class="modal-backdrop-custom" style="display:none;" onclick="closeAllModals()"></div>
+
 @section Scripts {
     <partial name="Shared/_ValidationScriptsPartial" />
     <script>
         function openLogin() {
-            document.getElementById("loginModal").style.display = "block";
+            closeAllModals();
+            document.getElementById("modalBackdrop").style.display = "block";
+            document.getElementById("loginModal").style.display = "flex";
         }
 
         function closeLogin() {
             document.getElementById("loginModal").style.display = "none";
+            document.getElementById("modalBackdrop").style.display = "none";
         }
 
         function openSignup() {
-            document.getElementById("signupModal").style.display = "block";
+            closeAllModals();
+            document.getElementById("modalBackdrop").style.display = "block";
+            document.getElementById("signupModal").style.display = "flex";
         }
 
         function closeSignup() {
             document.getElementById("signupModal").style.display = "none";
+            document.getElementById("modalBackdrop").style.display = "none";
+        }
+
+        function closeAllModals() {
+            const loginModal = document.getElementById("loginModal");
+            const signupModal = document.getElementById("signupModal");
+            const backdrop = document.getElementById("modalBackdrop");
+
+            if(loginModal) loginModal.style.display = "none";
+            if(signupModal) signupModal.style.display = "none";
+            if(backdrop) backdrop.style.display = "none";
         }
     </script>
 }

@@ -17,6 +17,8 @@ public class IndexModel : PageModel
     [TempData]
     public string? StatusMessage { get; set; }
 
+    public bool HasPinnedLobby => LobbyStore.Any(l => l.IsPinned);
+
     public IReadOnlyList<LobbyListItem> Lobbies => LobbyStore;
 
     [BindProperty]
@@ -36,9 +38,10 @@ public class IndexModel : PageModel
             1,
             CreateLobby.MaxPlayers,
             CreateLobby.SmallBlind,
-            CreateLobby.BigBlind);
+            CreateLobby.BigBlind,
+            true); // Set IsPinned to true for newly created lobbies
 
-        LobbyStore.Add(lobby);
+        LobbyStore.Insert(0, lobby); // Insert at the top of the list
         StatusMessage = "Lobby created.";
 
         return RedirectToPage();
@@ -67,13 +70,25 @@ public class IndexModel : PageModel
         return RedirectToPage("/Game/Index", new { id = lobby.Id });
     }
 
+    public IActionResult OnPostDelete(int id)
+    {
+        var lobbyIndex = LobbyStore.FindIndex(lobby => lobby.Id == id);
+        if (lobbyIndex >= 0)
+        {
+            LobbyStore.RemoveAt(lobbyIndex);
+            StatusMessage = "Lobby deleted.";
+        }
+        return RedirectToPage();
+    }
+
     public record LobbyListItem(
         int Id,
         string Name,
         int CurrentPlayers,
         int MaxPlayers,
         int SmallBlind,
-        int BigBlind)
+        int BigBlind,
+        bool IsPinned = false)
     {
         public bool IsFull => CurrentPlayers >= MaxPlayers;
     }

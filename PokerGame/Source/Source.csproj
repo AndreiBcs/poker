@@ -1,5 +1,4 @@
-<Project xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
- xsi:noNamespaceSchemaLocation="Source.xsd" Sdk="Microsoft.NET.Sdk.Web">
+<Project xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="Source.xsd" Sdk="Microsoft.NET.Sdk.Web">
 
   <PropertyGroup>
     <TargetFramework>net10.0</TargetFramework>
@@ -8,6 +7,7 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <PackageReference Include="BCrypt.Net-Next" Version="4.2.0" />
     <PackageReference Include="HoldemPoker.Evaluator" Version="1.0.1" />
     <PackageReference Include="Microsoft.EntityFrameworkCore" Version="10.0.8" />
     <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="10.0.8">
@@ -20,6 +20,9 @@
       <PrivateAssets>all</PrivateAssets>
     </PackageReference>
     <PackageReference Include="Microsoft.VisualStudio.Web.CodeGeneration.Design" Version="10.0.2" />
+    <!-- Add explicit references to override transitive vulnerable versions of NuGet.Protocol and NuGet.Packaging -->
+    <PackageReference Include="NuGet.Protocol" Version="7.6.0" />
+    <PackageReference Include="NuGet.Packaging" Version="7.6.0" />
   </ItemGroup>
 
 </Project>
