@@ -11,7 +11,8 @@ namespace Source.Features.User
 
 
 
-            group.MapGet("/{userId:guid}", async Task<Results<Ok<string>, NotFound>>(Guid userId, UserServices userService) =>
+            group.MapGet("/{userId:guid}", async Task<Results<Ok<string>, NotFound>>
+                (Guid userId, UserServices userService) =>
             {
                 var user = await userService.GetUserByIdAsync(userId);
 
@@ -20,16 +21,20 @@ namespace Source.Features.User
 
 
 
-            group.MapPost("/", async Task<Results<Created<string>, BadRequest>>(UserCreateRequest dto, UserServices userService) =>
+            group.MapPost("/", async Task<Results<Created<string>, BadRequest>>
+                (UserCreateRequest dto, UserServices userService) =>
             {
                 var user = await userService.CreateUserAsync(dto);
 
-                return user is not null ? TypedResults.Created($"/users/{user.Id}", user.Username) : TypedResults.BadRequest();
+                return user is not null ? 
+                            TypedResults.Created($"/users/{user.Id}", user.Username) : 
+                            TypedResults.BadRequest();
             });
 
 
 
-            group.MapPost("/login", async Task<Results<Ok<string>, UnauthorizedHttpResult>>(UserLoginRequest request, UserServices userService) =>
+            group.MapPost("/login", async Task<Results<Ok<string>, UnauthorizedHttpResult>>
+                (UserLoginRequest request, UserServices userService) =>
             {
                 var user = await userService.ValidateUserCredentialsAsync(request.Email, request.Password);
 
@@ -38,7 +43,8 @@ namespace Source.Features.User
 
 
 
-            group.MapPut("/{userId:guid}", async Task<Results<NoContent, NotFound>>(Guid userId, UserUpdateRequest dto, UserServices userService) =>
+            group.MapPut("/{userId:guid}", async Task<Results<NoContent, NotFound>>
+                (Guid userId, UserUpdateRequest dto, UserServices userService) =>
             {
                 var user = await userService.UpdateUserAsync(userId, dto);
 
@@ -46,17 +52,12 @@ namespace Source.Features.User
             });
 
 
-            group.MapDelete("/{userId:guid}", async Task<Results<NoContent, NotFound>>(Guid userId, UserServices userService) =>
+            group.MapDelete("/{userId:guid}", async Task<Results<NoContent, NotFound>>
+                (Guid userId, UserServices userService) =>
             {
                 var success = await userService.DeleteUserAsync(userId);
-                if (success)
-                {
-                    return TypedResults.NoContent();
-                }
-                else
-                {
-                    return TypedResults.NotFound();
-                }
+                
+                return success ? TypedResults.NoContent() : TypedResults.NotFound();
             });
         }
     }
