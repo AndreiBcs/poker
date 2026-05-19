@@ -3,92 +3,120 @@ using Source.Infrastructure.Persistence;
 
 namespace Source.Features.Lobby
 {
+    public enum LobbyJoinResult
+    {
+        Success,
+        LobbyNotFound,
+        LobbyFull,
+        UserNotFound,
+        Failed
+    }
+
+    public enum LobbyLeaveResult
+    {
+        Success,
+        LobbyNotFound,
+        UserNotFound,
+        NotInLobby,
+        Failed
+    }
+
     public class LobbyService(AppDbContext db)
     {
 
-        public async Task<Domain.Entities.Lobby?> GetLobbyByIdAsync(Guid lobbyId)
+        public async Task<Domain.Entities.Lobby?> GetLobbyByIdAsync(Guid lobbyId, bool includePlayers = false)
         {
-            var lobby = await db.Lobbies.FindAsync(lobbyId);
+            var query = db.Lobbies.AsNoTracking();
+            if (includePlayers)
+            {
+                query = query.Include(lobby => lobby.Players);
+            }
 
-            return lobby;
+            return await query.FirstOrDefaultAsync(lobby => lobby.Id == lobbyId);
         }
 
 
-        public async Task<List<Domain.Entities.Lobby>> GetAllLobbiesAsync()
+        public async Task<List<Domain.Entities.Lobby>> GetAllLobbiesAsync(bool includePlayers = false)
         {
-            var lobbies = await db.Lobbies.ToListAsync();
+            var query = db.Lobbies.AsNoTracking();
+            if (includePlayers)
+            {
+                query = query.Include(lobby => lobby.Players);
+            }
+
+            var lobbies = await query.ToListAsync();
 
             return lobbies;
         }
 
 
-        public async Task<bool> JoinLobbyAsync(Guid lobbyId, HttpContext httpContext)
+        public async Task<LobbyJoinResult> JoinLobbyAsync(Guid lobbyId, Guid userId)
         {
-            var userId = httpContext.User.Claims.FirstOrDefault(c => c.Type == "userId")?.Value;
-            if (string.IsNullOrEmpty(userId))
-            {
-                return false;
-            }
-
             var lobby = await db.Lobbies.Include(l => l.Players).FirstOrDefaultAsync(l => l.Id == lobbyId);
-            if (lobby is null) return false;
+            if (lobby is null) return LobbyJoinResult.LobbyNotFound;
 
-            bool alreadyInLobby = lobby.Players.Any(p => p.Id.ToString() == userId);
-            if (alreadyInLobby) return true;
-
-            var user = await db.Users.FindAsync(Guid.Parse(userId));
-            if (user is null) return false;
+            var user = await db.Users.FindAsync(userId);
+            if (user is null) return LobbyJoinResult.UserNotFound;
 
             await using var transaction = await db.Database.BeginTransactionAsync();
 
             try
             {
-                lobby.Players.Add(user);
+                if (user.LobbyId == lobby.Id)
+                {
+                    await transaction.CommitAsync();
+                    return LobbyJoinResult.Success;
+                }
 
-                db.Lobbies.Update(lobby);
+                if (lobby.Players.Count >= lobby.MaxPlayers)
+                {
+                    await transaction.RollbackAsync();
+                    return LobbyJoinResult.LobbyFull;
+                }
+
+                user.LobbyId = lobby.Id;
+                db.Users.Update(user);
                 await db.SaveChangesAsync();
                 await transaction.CommitAsync();
 
-                return true;
+                return LobbyJoinResult.Success;
             }
             catch (Exception)
             {
                 await transaction.RollbackAsync();
-                return false;
+                return LobbyJoinResult.Failed;
             }
         }
 
 
-        public async Task<bool> LeaveLobbyAsync(Guid lobbyId, HttpContext httpContext)
+        public async Task<LobbyLeaveResult> LeaveLobbyAsync(Guid lobbyId, Guid userId)
         {
-            var userId = httpContext.User.Claims.FirstOrDefault(c => c.Type == "userId")?.Value;
-            if (string.IsNullOrEmpty(userId))
-            {
-                return false;
-            }
+            var lobbyExists = await db.Lobbies.AnyAsync(lobby => lobby.Id == lobbyId);
+            if (!lobbyExists) return LobbyLeaveResult.LobbyNotFound;
 
-            var lobby = await db.Lobbies.Include(l => l.Players).FirstOrDefaultAsync(l => l.Id == lobbyId);
-            if (lobby is null) return false;
-           
-            var user = await db.Users.FindAsync(Guid.Parse(userId));
-            if (user is null) return false;
+            var user = await db.Users.FindAsync(userId);
+            if (user is null) return LobbyLeaveResult.UserNotFound;
+
+            if (user.LobbyId != lobbyId)
+            {
+                return LobbyLeaveResult.NotInLobby;
+            }
 
             await using var transaction = await db.Database.BeginTransactionAsync();
 
             try
             {
-                lobby.Players.Remove(user);
-
-                db.Lobbies.Update(lobby);
+                user.LobbyId = null;
+                db.Users.Update(user);
                 await db.SaveChangesAsync();
                 await transaction.CommitAsync();
 
-                return true;
+                return LobbyLeaveResult.Success;
             }
             catch (Exception)
             {
                 await transaction.RollbackAsync();
-                return false;
+                return LobbyLeaveResult.Failed;
             }
         }
 
@@ -96,9 +124,9 @@ namespace Source.Features.Lobby
         public async Task<Domain.Entities.Lobby?> CreateLobbyAsync(LobbyCreateRequest dto)
         {
             if(string.IsNullOrWhiteSpace(dto.Name) 
-                || int.IsNegative(dto.MaxPlayers) 
-                || int.IsNegative(dto.SmallBlind)
-                || int.IsNegative(dto.BigBlind))
+                || dto.MaxPlayers < 2 
+                || dto.SmallBlind < 1
+                || dto.BigBlind < 1)
             {
                 return null;
             }
@@ -137,9 +165,9 @@ namespace Source.Features.Lobby
             if (lobby is null) return null;
 
             if(string.IsNullOrWhiteSpace(dto.Name) 
-                || int.IsNegative(dto.MaxPlayers) 
-                || int.IsNegative(dto.SmallBlind)
-                || int.IsNegative(dto.BigBlind))
+                || dto.MaxPlayers < 2 
+                || dto.SmallBlind < 1
+                || dto.BigBlind < 1)
             {
                 return null;
             }
@@ -180,6 +208,12 @@ namespace Source.Features.Lobby
                 {
                     await transaction.RollbackAsync();
                     return false;
+                }
+
+                var lobbyUsers = await db.Users.Where(user => user.LobbyId == lobbyId).ToListAsync();
+                foreach (var user in lobbyUsers)
+                {
+                    user.LobbyId = null;
                 }
 
                 db.Lobbies.Remove(lobby);

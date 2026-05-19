@@ -5,7 +5,7 @@
     <button class="close-modal-btn" type="button" onclick="closeSignup()">x</button>
 
     <form method="post" asp-page-handler="Signup">
-        <div asp-validation-summary="ModelOnly"></div>
+        <div asp-validation-summary="All"></div>
 
         <input asp-for="Signup.Username" placeholder="Username" />
         <span asp-validation-for="Signup.Username"></span>

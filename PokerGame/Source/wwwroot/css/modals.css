@@ -180,3 +180,24 @@
 .field-validation-valid {
     display: none !important;
 }
+
+.validation-summary-errors {
+    color: #ff4d4d;
+    font-size: 0.95rem;
+    margin-bottom: 0.5rem;
+}
+
+.validation-summary-errors ul {
+    margin: 0;
+    padding-left: 1.2rem;
+}
+
+.modal .input-validation-error {
+    border-color: #ff4d4d;
+    box-shadow: 0 0 6px rgba(255, 77, 77, 0.6);
+}
+
+.modal .input-validation-error:focus {
+    border-color: #ff4d4d;
+    box-shadow: 0 0 8px rgba(255, 77, 77, 0.8);
+}

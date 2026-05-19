@@ -55,5 +55,12 @@
             if(signupModal) signupModal.style.display = "none";
             if(backdrop) backdrop.style.display = "none";
         }
+
+        const openModal = "@(ViewData["OpenModal"] ?? string.Empty)";
+        if (openModal === "login") {
+            openLogin();
+        } else if (openModal === "signup") {
+            openSignup();
+        }
     </script>
 }

@@ -13,6 +13,16 @@ namespace Source.Features.User
             return user;
         }
 
+        public async Task<Domain.Entities.User?> GetUserByEmailAsync(string email)
+        {
+            if (string.IsNullOrWhiteSpace(email))
+            {
+                return null;
+            }
+
+            return await db.Users.FirstOrDefaultAsync(user => user.Email == email);
+        }
+
 
 
         public async Task<Domain.Entities.User?> CreateUserAsync(UserCreateRequest dto)
@@ -28,6 +38,13 @@ namespace Source.Features.User
 
             try
             {
+                var existingUser = await db.Users.AnyAsync(user => user.Email == dto.Email);
+                if (existingUser)
+                {
+                    await transaction.RollbackAsync();
+                    return null;
+                }
+
                 var user = new Domain.Entities.User
                 {
                     Id = Guid.NewGuid(),
@@ -71,8 +88,7 @@ namespace Source.Features.User
             if (user is null) return null;
 
             if(string.IsNullOrWhiteSpace(dto.Username) 
-                || string.IsNullOrWhiteSpace(dto.Email) 
-                || string.IsNullOrWhiteSpace(dto.Password))
+                || string.IsNullOrWhiteSpace(dto.Email))
             {
                 return null;
             }
@@ -83,7 +99,10 @@ namespace Source.Features.User
             {
                 user.Username = dto.Username;
                 user.Email = dto.Email;
-                user.PasswordHash = BCrypt.Net.BCrypt.HashPassword(dto.Password);
+                if (!string.IsNullOrWhiteSpace(dto.Password))
+                {
+                    user.PasswordHash = BCrypt.Net.BCrypt.HashPassword(dto.Password);
+                }
 
                 db.Users.Update(user);
                 await db.SaveChangesAsync();

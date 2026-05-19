@@ -1,15 +1,29 @@
 using Microsoft.EntityFrameworkCore;
+using Source.Features.Lobby;
 using Source.Features.User;
+using Source.Infrastructure.Authentication;
 using Source.Infrastructure.Persistence;
 
 var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddRazorPages();
+builder.Services.AddCookieAuthentication();
 builder.Services.AddScoped<UserServices>();
+builder.Services.AddScoped<LobbyService>();
+builder.Services.AddScoped<UserSessionService>();
+var dbPath = Path.Combine(builder.Environment.ContentRootPath, "app.db");
+var connectionString = $"Data Source={dbPath}";
+
 builder.Services.AddDbContext<AppDbContext>(options =>
-                options.UseSqlite(builder.Configuration.GetConnectionString("DefaultConnection")));
+                options.UseSqlite(connectionString));
 
 var app = builder.Build();
+
+using (var scope = app.Services.CreateScope())
+{
+    var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+    db.Database.Migrate();
+}
 
 if (!app.Environment.IsDevelopment())
 {
@@ -22,8 +36,11 @@ app.UseHttpsRedirection();
 
 app.UseRouting();
 
+app.UseAuthentication();
 app.UseAuthorization();
 
+app.MapUserEndpoints();
+app.MapLobbyEndpoints();
 app.MapStaticAssets();
 app.MapRazorPages()
    .WithStaticAssets();

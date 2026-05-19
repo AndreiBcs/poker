@@ -41,16 +41,20 @@ namespace Source.Migrations
                     b.Property<int>("BigBlind")
                         .HasColumnType("INTEGER");
 
+                    b.Property<int>("MaxPlayers")
+                        .HasColumnType("INTEGER");
+
                     b.Property<string>("Name")
                         .IsRequired()
                         .HasColumnType("TEXT");
 
-                    b.Property<int>("SmallBling")
-                        .HasColumnType("INTEGER");
+                    b.Property<int>("SmallBlind")
+                        .HasColumnType("INTEGER")
+                        .HasColumnName("SmallBling");
 
                     b.HasKey("Id");
 
-                    b.ToTable("Lobby");
+                    b.ToTable("Lobby", (string)null);
                 });
 
             modelBuilder.Entity("Source.Domain.Entities.User", b =>
@@ -83,9 +87,11 @@ namespace Source.Migrations
 
             modelBuilder.Entity("Source.Domain.Entities.User", b =>
                 {
-                    b.HasOne("Source.Domain.Entities.Lobby", null)
+                    b.HasOne("Source.Domain.Entities.Lobby", "Lobby")
                         .WithMany("Players")
                         .HasForeignKey("LobbyId");
+
+                    b.Navigation("Lobby");
                 });
 
             modelBuilder.Entity("Source.Domain.Entities.Lobby", b =>

@@ -43,8 +43,17 @@
                     <div class="card-actions">
                         @if (lobby.IsPinned)
                         {
-                            <button class="edit-btn" type="button" onclick="openEditLobby(@lobby.Id)">Edit</button>
-                            <button class="delete-btn" type="button" onclick="openDeleteLobby(@lobby.Id)">Delete</button>
+                            <button class="edit-btn"
+                                    type="button"
+                                    data-lobby-id="@lobby.Id"
+                                    data-lobby-name="@lobby.Name"
+                                    data-lobby-max="@lobby.MaxPlayers"
+                                    data-lobby-small="@lobby.SmallBlind"
+                                    data-lobby-big="@lobby.BigBlind"
+                                    onclick="openEditLobby(this)">
+                                Edit
+                            </button>
+                            <button class="delete-btn" type="button" data-lobby-id="@lobby.Id" onclick="openDeleteLobby(this)">Delete</button>
                         }
                         <form method="post" asp-page-handler="Join" asp-route-id="@lobby.Id" style="margin:0;">
                             @if (lobby.IsPinned && lobby.CurrentPlayers < 2)
@@ -86,7 +95,8 @@
 
         <div class="input-group">
             <div class="modal-label">Table Name</div>
-            <input name="NameDummy" type="text" placeholder="e.g. High Rollers" />
+            <input asp-for="CreateLobby.Name" type="text" placeholder="e.g. High Rollers" />
+            <span asp-validation-for="CreateLobby.Name"></span>
         </div>
 
         <div class="input-group">
@@ -120,22 +130,31 @@
 
     <form method="post" asp-page-handler="Edit">
         <div asp-validation-summary="ModelOnly"></div>
-        <input type="hidden" id="editLobbyId" name="Id" />
+        <input type="hidden" id="editLobbyId" asp-for="EditLobby.Id" />
 
         <div class="input-group">
             <div class="modal-label" style="color: #4da6ff;">Table Name</div>
-            <input name="NameDummy" style="border-color: #4da6ff;" type="text" placeholder="Rename Table" />
+            <input id="editLobbyName" asp-for="EditLobby.Name" style="border-color: #4da6ff;" type="text" placeholder="Rename Table" />
+            <span asp-validation-for="EditLobby.Name"></span>
+        </div>
+
+        <div class="input-group">
+            <div class="modal-label" style="color: #4da6ff;">Max Players (2-10)</div>
+            <input id="editLobbyMaxPlayers" asp-for="EditLobby.MaxPlayers" style="border-color: #4da6ff;" type="number" min="2" max="10"/>
+            <span asp-validation-for="EditLobby.MaxPlayers"></span>
         </div>
 
         <div class="input-row">
             <div class="input-group">
                 <div class="modal-label" style="color: #4da6ff;">Small Blind ($)</div>
-                <input asp-for="CreateLobby.SmallBlind" style="border-color: #4da6ff;" type="number" min="1" />
+                <input id="editLobbySmallBlind" asp-for="EditLobby.SmallBlind" style="border-color: #4da6ff;" type="number" min="1" />
+                <span asp-validation-for="EditLobby.SmallBlind"></span>
             </div>
 
             <div class="input-group">
                 <div class="modal-label" style="color: #4da6ff;">Big Blind ($)</div>
-                <input asp-for="CreateLobby.BigBlind" style="border-color: #4da6ff;" type="number" min="1" />
+                <input id="editLobbyBigBlind" asp-for="EditLobby.BigBlind" style="border-color: #4da6ff;" type="number" min="1" />
+                <span asp-validation-for="EditLobby.BigBlind"></span>
             </div>
         </div>
         <button type="submit" style="background: linear-gradient(180deg, #4da6ff 0%, #0073e6 100%);">Save Changes</button>
@@ -167,17 +186,23 @@
 
     <div style="margin-bottom: 2rem;">
         <div style="color: #FFD700; font-size: 1.1rem; margin-bottom: 0.5rem;">Username</div>
-        <div style="color: #fff; font-size: 1.2rem; background: rgba(0,0,0,0.3); padding: 0.5rem; border-radius: 6px;">Player1</div>
+        <div style="color: #fff; font-size: 1.2rem; background: rgba(0,0,0,0.3); padding: 0.5rem; border-radius: 6px;">@Model.Profile.Username</div>
     </div>
 
     <div style="margin-bottom: 2rem;">
         <div style="color: #FFD700; font-size: 1.1rem; margin-bottom: 0.5rem;">Email</div>
-        <div style="color: #fff; font-size: 1.2rem; background: rgba(0,0,0,0.3); padding: 0.5rem; border-radius: 6px;">player1@example.com</div>
+        <div style="color: #fff; font-size: 1.2rem; background: rgba(0,0,0,0.3); padding: 0.5rem; border-radius: 6px;">@Model.Profile.Email</div>
     </div>
 
     <form method="post" asp-page-handler="DeleteAccount" style="margin-top: 2rem;">
         <button type="button" class="join-btn" style="width: 100%; border-color: #aaa; color: #aaa; margin-bottom: 1rem;" onclick="openUpdateProfileModal()">Update Details</button>
         <button type="submit" style="width: 100%; background: linear-gradient(180deg, #ff4d4d 0%, #cc0000 100%); border:none; border-radius:8px; font-weight:bold; color:#fff; text-transform:uppercase; box-shadow: 0 4px 6px rgba(0,0,0,0.3); padding: 0.9rem;">Delete Account</button>
+    </form>
+
+    <form method="post" asp-page-handler="Logout" style="margin-top: 1rem;">
+        <button type="submit" class="join-btn" style="width: 100%; border-color: #aaa; color: #aaa;">
+            Log Out
+        </button>
     </form>
 </div>
 
@@ -187,19 +212,23 @@
     <button class="close-modal-btn" style="color: #4da6ff; border-color: #4da6ff;" type="button" onclick="closeAllLobbyModals()">×</button>
 
     <form method="post" asp-page-handler="UpdateProfile">
+        <div asp-validation-summary="ModelOnly"></div>
         <div class="input-group">
             <div class="modal-label" style="color: #4da6ff;">Username</div>
-            <input name="Username" style="border-color: #4da6ff;" type="text" value="Player1" />
+            <input asp-for="UpdateProfile.Username" style="border-color: #4da6ff;" type="text" />
+            <span asp-validation-for="UpdateProfile.Username"></span>
         </div>
 
         <div class="input-group">
             <div class="modal-label" style="color: #4da6ff;">Email</div>
-            <input name="Email" style="border-color: #4da6ff;" type="email" value="player1@example.com" />
+            <input asp-for="UpdateProfile.Email" style="border-color: #4da6ff;" type="email" />
+            <span asp-validation-for="UpdateProfile.Email"></span>
         </div>
 
         <div class="input-group">
             <div class="modal-label" style="color: #4da6ff;">New Password</div>
-            <input name="Password" style="border-color: #4da6ff;" type="password" placeholder="Leave blank to keep current" />
+            <input asp-for="UpdateProfile.Password" style="border-color: #4da6ff;" type="password" placeholder="Leave blank to keep current" />
+            <span asp-validation-for="UpdateProfile.Password"></span>
         </div>
 
         <button type="submit" style="background: linear-gradient(180deg, #4da6ff 0%, #0073e6 100%); margin-top: 1rem;">Save Details</button>
@@ -215,16 +244,20 @@
             document.getElementById("createLobbyModal").style.display = "flex";
         }
 
-        function openEditLobby(id) {
+        function openEditLobby(button) {
             closeAllLobbyModals();
-            document.getElementById("editLobbyId").value = id;
+            document.getElementById("editLobbyId").value = button.getAttribute("data-lobby-id");
+            document.getElementById("editLobbyName").value = button.getAttribute("data-lobby-name");
+            document.getElementById("editLobbyMaxPlayers").value = button.getAttribute("data-lobby-max");
+            document.getElementById("editLobbySmallBlind").value = button.getAttribute("data-lobby-small");
+            document.getElementById("editLobbyBigBlind").value = button.getAttribute("data-lobby-big");
             document.getElementById("modalBackdropLobby").style.display = "block";
             document.getElementById("editLobbyModal").style.display = "flex";
         }
 
-        function openDeleteLobby(id) {
+        function openDeleteLobby(button) {
             closeAllLobbyModals();
-            document.getElementById("deleteLobbyId").value = id;
+            document.getElementById("deleteLobbyId").value = button.getAttribute("data-lobby-id");
             document.getElementById("modalBackdropLobby").style.display = "block";
             document.getElementById("deleteLobbyModal").style.display = "flex";
         }
@@ -258,6 +291,16 @@
                 toast.classList.add("fade-out");
                 setTimeout(() => toast.remove(), 500); // Remove from DOM after fade completes
             }, 3000);
+        }
+
+        const openModal = "@(ViewData["OpenModal"] ?? string.Empty)";
+        if (openModal === "create") {
+            openCreateLobby();
+        } else if (openModal === "edit") {
+            document.getElementById("modalBackdropLobby").style.display = "block";
+            document.getElementById("editLobbyModal").style.display = "flex";
+        } else if (openModal === "updateProfile") {
+            openUpdateProfileModal();
         }
     </script>
 }
