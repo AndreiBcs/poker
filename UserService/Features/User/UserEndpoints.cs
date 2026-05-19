@@ -8,42 +8,36 @@ namespace UserService.Features.User
     {
         public static void MapUserEndpoints(this WebApplication app)
         {
-            var group = app.MapGroup("/api/users").RequireAuthorization().RequireRateLimiting("api");
+            var group = app.MapGroup("/api/users");
 
 
-            group.MapGet("/{id:guid}", async Task<Results<Ok<UserResponseDto>, NotFound>> 
+            group.MapGet("/{id:guid}", async Task<Results<Ok<UserResponseDTO>, NotFound>> 
                 (Guid id, IUserService service) =>
             {
-                var user = await service.GetUser(id);
+                var user = await service.GetUserAsync(id);
                 return user is not null
                     ? TypedResults.Ok(user)
                     : TypedResults.NotFound();
             });
 
 
-            group.MapPut("/update-user/{id:guid}", async Task<Results<Ok<UserResponseDto>, NotFound, Conflict<string>, ValidationProblem>> 
-                (Guid id, UpdateUserDto dto, IValidator<UpdateUserDto> validator, IUserService service) =>
+            group.MapPut("/{id:guid}", async Task<Results<Ok<UserResponseDTO>, NotFound, Conflict<string>, ValidationProblem>> 
+                (Guid id, UpdateUserDTO dto, IValidator<UpdateUserDTO> validator, IUserService service) =>
             {
                 var validation = await validator.ValidateAsync(dto);
                 if (!validation.IsValid)
                     return TypedResults.ValidationProblem(validation.ToDictionary());
 
-                if (await service.UsernameConflict(dto.Username))
-                    return TypedResults.Conflict("Username already taken.");
-
-                if (await service.EmailConflict(dto.Email))
-                    return TypedResults.Conflict("Email already in use.");
-
-                var updated = await service.UpdateUser(id, dto);
+                var updated = await service.UpdateUserAsync(id, dto);
                 return updated is not null
                     ? TypedResults.Ok(updated)
                     : TypedResults.NotFound();
             });
 
 
-            group.MapDelete("/delete-user/{id:guid}", async Task<Results<NoContent, NotFound>> 
+            group.MapDelete("/{id:guid}", async Task<Results<NoContent, NotFound>> 
                 (Guid id, IUserService service) =>
-                await service.DeleteUser(id)
+                await service.DeleteUserAsync(id)
                     ? TypedResults.NoContent()
                     : TypedResults.NotFound());
                     
