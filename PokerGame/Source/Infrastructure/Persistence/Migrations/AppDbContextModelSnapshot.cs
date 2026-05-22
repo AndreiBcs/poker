@@ -23,9 +23,15 @@ namespace Source.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("TEXT");
 
+                    b.Property<int>("BigBlind")
+                        .HasColumnType("INTEGER");
+
                     b.Property<string>("Name")
                         .IsRequired()
                         .HasColumnType("TEXT");
+
+                    b.Property<int>("SmallBlind")
+                        .HasColumnType("INTEGER");
 
                     b.HasKey("Id");
 
@@ -48,6 +54,9 @@ namespace Source.Migrations
                         .IsRequired()
                         .HasColumnType("TEXT");
 
+                    b.Property<Guid?>("OwnerUserId")
+                        .HasColumnType("TEXT");
+
                     b.Property<int>("SmallBlind")
                         .HasColumnType("INTEGER")
                         .HasColumnName("SmallBling");
@@ -67,6 +76,9 @@ namespace Source.Migrations
                         .IsRequired()
                         .HasColumnType("TEXT");
 
+                    b.Property<Guid?>("GameId")
+                        .HasColumnType("TEXT");
+
                     b.Property<Guid?>("LobbyId")
                         .HasColumnType("TEXT");
 
@@ -80,6 +92,8 @@ namespace Source.Migrations
 
                     b.HasKey("Id");
 
+                    b.HasIndex("GameId");
+
                     b.HasIndex("LobbyId");
 
                     b.ToTable("Users");
@@ -87,11 +101,20 @@ namespace Source.Migrations
 
             modelBuilder.Entity("Source.Domain.Entities.User", b =>
                 {
+                    b.HasOne("Source.Domain.Entities.Game", null)
+                        .WithMany("Players")
+                        .HasForeignKey("GameId");
+
                     b.HasOne("Source.Domain.Entities.Lobby", "Lobby")
                         .WithMany("Players")
                         .HasForeignKey("LobbyId");
 
                     b.Navigation("Lobby");
+                });
+
+            modelBuilder.Entity("Source.Domain.Entities.Game", b =>
+                {
+                    b.Navigation("Players");
                 });
 
             modelBuilder.Entity("Source.Domain.Entities.Lobby", b =>
