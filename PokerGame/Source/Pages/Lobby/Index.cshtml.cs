@@ -54,11 +54,17 @@ public class IndexModel : PageModel
             return Page();
         }
 
+        var userId = User.GetUserId();
+        if (userId is null)
+        {
+            return RedirectToPage("/Index");
+        }
+
         var lobby = await _lobbyService.CreateLobbyAsync(new LobbyCreateRequest(
             CreateLobby.Name,
             CreateLobby.MaxPlayers,
             CreateLobby.SmallBlind,
-            CreateLobby.BigBlind));
+            CreateLobby.BigBlind), userId.Value);
 
         if (lobby is null)
         {
@@ -67,14 +73,10 @@ public class IndexModel : PageModel
             return Page();
         }
 
-        var userId = User.GetUserId();
-        if (userId is not null)
+        var joinResult = await _lobbyService.JoinLobbyAsync(lobby.Id, userId.Value);
+        if (joinResult != LobbyJoinResult.Success)
         {
-            var joinResult = await _lobbyService.JoinLobbyAsync(lobby.Id, userId.Value);
-            if (joinResult != LobbyJoinResult.Success)
-            {
-                StatusMessage = "Lobby created, but you could not join it.";
-            }
+            StatusMessage = "Lobby created, but you could not join it.";
         }
 
         StatusMessage = "Lobby created.";

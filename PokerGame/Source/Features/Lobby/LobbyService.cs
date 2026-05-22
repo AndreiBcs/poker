@@ -121,12 +121,13 @@ namespace Source.Features.Lobby
         }
 
 
-        public async Task<Domain.Entities.Lobby?> CreateLobbyAsync(LobbyCreateRequest dto)
+        public async Task<Domain.Entities.Lobby?> CreateLobbyAsync(LobbyCreateRequest dto, Guid ownerUserId)
         {
             if(string.IsNullOrWhiteSpace(dto.Name) 
                 || dto.MaxPlayers < 2 
                 || dto.SmallBlind < 1
-                || dto.BigBlind < 1)
+                || dto.BigBlind < 1
+                || ownerUserId == Guid.Empty)
             {
                 return null;
             }
@@ -139,6 +140,7 @@ namespace Source.Features.Lobby
                 {
                     Id = Guid.NewGuid(),
                     Name = dto.Name,
+                    OwnerUserId = ownerUserId,
                     MaxPlayers = dto.MaxPlayers,
                     SmallBlind = dto.SmallBlind,
                     BigBlind = dto.BigBlind

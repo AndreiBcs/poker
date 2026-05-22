@@ -85,10 +85,16 @@ namespace Source.Features.Lobby
                 };
             });
 
-            group.MapPost("/", async Task<Results<Created<LobbyDetailResponse>, BadRequest>>
-                (LobbyCreateRequest dto, LobbyService lobbyService) =>
+            group.MapPost("/", async Task<Results<Created<LobbyDetailResponse>, BadRequest, UnauthorizedHttpResult>>
+                (LobbyCreateRequest dto, LobbyService lobbyService, HttpContext httpContext) =>
             {
-                var lobby = await lobbyService.CreateLobbyAsync(dto);
+                var userId = httpContext.User.GetUserId();
+                if (userId is null)
+                {
+                    return TypedResults.Unauthorized();
+                }
+
+                var lobby = await lobbyService.CreateLobbyAsync(dto, userId.Value);
 
                 if (lobby is null)
                 {

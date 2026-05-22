@@ -17,6 +17,7 @@ namespace Source.Infrastructure.Persistence
             {
                 entity.ToTable("Lobby");
                 entity.Property(lobby => lobby.SmallBlind).HasColumnName("SmallBling");
+                entity.Property(lobby => lobby.OwnerUserId).IsRequired(false);
                 entity.HasMany(lobby => lobby.Players)
                     .WithOne(user => user.Lobby)
                     .HasForeignKey(user => user.LobbyId);
