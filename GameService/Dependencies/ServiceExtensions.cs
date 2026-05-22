@@ -12,7 +12,7 @@ namespace GameService.Dependencies
         public static IServiceCollection AddGameServices(this IServiceCollection services)
         {
            //Vrem mereeeu o singura instanta de aia e singleton adica e imutabil si constructorul e privat
-            services.AddSingleton<IGameStateMachine, GameStateMachine>(); 
+            services.AddSingleton<IGameStateMachine, IGameStateMachine>(); 
 
         
            
