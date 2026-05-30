@@ -24,7 +24,7 @@ namespace GameService.State
         DrawCards,      
         SecondBetting,   
         
-       
+       //ambele se folosesc de showdown
         Showdown
     }
 }
