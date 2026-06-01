@@ -20,3 +20,121 @@ body {
   min-height: 100vh;
   overflow: hidden;
 }
+
+.ui-overlay {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  padding: 24px;
+  z-index: 2;
+  pointer-events: none;
+}
+
+.game-panel {
+  max-width: 520px;
+  background: rgba(0, 0, 0, 0.6);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: 12px;
+  padding: 16px;
+  pointer-events: auto;
+}
+
+.game-info {
+  display: grid;
+  gap: 6px;
+  font-size: 0.95rem;
+}
+
+.board-cards {
+  display: flex;
+  gap: 8px;
+  margin-top: 12px;
+  min-height: 64px;
+}
+
+.card-chip {
+  display: grid;
+  place-items: center;
+  width: 48px;
+  height: 64px;
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  font-weight: 600;
+}
+
+.players-list {
+  margin-top: 12px;
+  display: grid;
+  gap: 8px;
+  max-height: 40vh;
+  overflow: auto;
+}
+
+.player-row {
+  display: grid;
+  grid-template-columns: 1.2fr 0.7fr 0.7fr 0.9fr 1fr;
+  gap: 8px;
+  align-items: center;
+  padding: 8px 10px;
+  border-radius: 8px;
+  background: rgba(0, 0, 0, 0.45);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  font-size: 0.85rem;
+}
+
+.player-row.turn {
+  border-color: rgba(242, 212, 121, 0.8);
+  box-shadow: 0 0 0 1px rgba(242, 212, 121, 0.35);
+}
+
+.player-row.folded {
+  opacity: 0.6;
+}
+
+.player-tags {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+  font-size: 0.7rem;
+  color: #f2d479;
+}
+
+.game-actions {
+  margin-top: 16px;
+  display: grid;
+  gap: 10px;
+  max-width: 420px;
+  pointer-events: auto;
+}
+
+.action-row {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.action-btn {
+  padding: 8px 12px;
+  border-radius: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  background: rgba(0, 0, 0, 0.6);
+  color: #fff;
+  font-weight: 600;
+}
+
+.action-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+#raiseAmount {
+  width: 90px;
+  padding: 6px 8px;
+  border-radius: 6px;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  background: rgba(0, 0, 0, 0.5);
+  color: #fff;
+}

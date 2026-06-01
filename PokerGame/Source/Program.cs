@@ -1,4 +1,5 @@
 using Microsoft.EntityFrameworkCore;
+using Source.Features.Game;
 using Source.Features.Lobby;
 using Source.Features.User;
 using Source.Infrastructure.Authentication;
@@ -11,6 +12,10 @@ builder.Services.AddCookieAuthentication();
 builder.Services.AddScoped<UserServices>();
 builder.Services.AddScoped<LobbyService>();
 builder.Services.AddScoped<UserSessionService>();
+builder.Services.AddSingleton<GameStateStore>();
+builder.Services.AddSingleton<GameConnectionManager>();
+builder.Services.AddScoped<GameService>();
+builder.Services.AddScoped<GameWebSocketHandler>();
 var dbPath = Path.Combine(builder.Environment.ContentRootPath, "app.db");
 var connectionString = $"Data Source={dbPath}";
 
@@ -35,12 +40,14 @@ if (!app.Environment.IsDevelopment())
 app.UseHttpsRedirection();
 
 app.UseRouting();
+app.UseWebSockets();
 
 app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapUserEndpoints();
 app.MapLobbyEndpoints();
+app.MapGameEndpoints();
 app.MapStaticAssets();
 app.MapRazorPages()
    .WithStaticAssets();

@@ -1,19 +1,63 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
+using Source.Features.Lobby;
+using Source.Infrastructure.Authentication;
 
 namespace Source.Pages.Game;
 
 [Authorize]
 public class IndexModel : PageModel
 {
+    private readonly LobbyService _lobbyService;
+
+    public IndexModel(LobbyService lobbyService)
+    {
+        _lobbyService = lobbyService;
+    }
+
     [TempData]
     public string? StatusMessage { get; set; }
 
     public Guid? LobbyId { get; private set; }
+    public string LobbyName { get; private set; } = string.Empty;
+    public int SmallBlind { get; private set; }
+    public int BigBlind { get; private set; }
+    public bool IsLeader { get; private set; }
 
-    public void OnGet(Guid? id)
+    public async Task<IActionResult> OnGetAsync(Guid? id)
     {
-        LobbyId = id;
+        if (id is null)
+        {
+            StatusMessage = "No lobby selected.";
+            return Page();
+        }
+
+        var userId = User.GetUserId();
+        if (userId is null)
+        {
+            return RedirectToPage("/Index");
+        }
+
+        var lobby = await _lobbyService.GetLobbyByIdAsync(id.Value, includePlayers: true);
+        if (lobby is null)
+        {
+            StatusMessage = "Lobby not found.";
+            return Page();
+        }
+
+        if (!lobby.Players.Any(player => player.Id == userId.Value))
+        {
+            StatusMessage = "You are not in this lobby.";
+            return RedirectToPage("/Lobby/Index");
+        }
+
+        LobbyId = lobby.Id;
+        LobbyName = lobby.Name;
+        SmallBlind = lobby.SmallBlind;
+        BigBlind = lobby.BigBlind;
+        IsLeader = lobby.OwnerUserId == userId.Value;
+
+        return Page();
     }
 }

@@ -5,7 +5,7 @@
     ViewData["Title"] = "Game";
 }
 
-<div class="game-container">
+<div class="game-container" data-lobby-id="@Model.LobbyId" data-is-leader="@Model.IsLeader.ToString().ToLowerInvariant()">
 
     @if (!string.IsNullOrWhiteSpace(Model.StatusMessage))
     {
@@ -14,7 +14,9 @@
 
     @if (Model.LobbyId.HasValue)
     {
-        <div class="lobby-banner">Lobby @Model.LobbyId.Value</div>
+        <div class="lobby-banner">
+            @Model.LobbyName (Blinds $@Model.SmallBlind / $@Model.BigBlind)
+        </div>
     }
 
     <div class="table-background">
@@ -22,21 +24,39 @@
     </div>
 
     <div class="ui-overlay">
-        <button onclick="toggleActions()">Actions</button>
+        <div class="game-panel">
+            <div class="game-info">
+                <div><strong>Phase:</strong> <span id="phaseValue">Waiting</span></div>
+                <div><strong>Pot:</strong> $<span id="potValue">0</span></div>
+                <div><strong>Turn:</strong> <span id="turnValue">-</span></div>
+                <div id="gameStatus" class="status-message" style="display:none;"></div>
+            </div>
 
-        <div id="actionsPanel" style="display:none;">
-            <button>Check</button>
-            <button>Call</button>
-            <button>Raise</button>
-            <button>Fold</button>
+            <div id="boardCards" class="board-cards"></div>
+            <div id="playersList" class="players-list"></div>
+        </div>
+
+        <div class="game-actions">
+            @if (Model.IsLeader && Model.LobbyId.HasValue)
+            {
+                <button id="startGameBtn" class="action-btn">Start Game</button>
+            }
+
+            <div class="action-row">
+                <button class="action-btn" data-action="check">Check</button>
+                <button class="action-btn" data-action="call">Call</button>
+                <button class="action-btn" data-action="fold">Fold</button>
+            </div>
+
+            <div class="action-row">
+                <input id="raiseAmount" type="number" min="1" value="50" />
+                <button class="action-btn" data-action="raise">Raise</button>
+            </div>
         </div>
     </div>
 
 </div>
 
-<script>
-function toggleActions() {
-    const panel = document.getElementById("actionsPanel");
-    panel.style.display = panel.style.display === "none" ? "block" : "none";
+@section Scripts {
+    <script src="~/js/game.js" asp-append-version="true"></script>
 }
-</script>
