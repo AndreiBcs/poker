@@ -55,6 +55,22 @@
     socket.send(JSON.stringify({ type, payload }));
   }
 
+  function getCardImageUrl(card) {
+    if (!card) return "/images/cards/back/cardCover.png";
+    const suitMap = {
+      "Spades": "negru",
+      "Hearts": "rosu",
+      "Diamonds": "romb",
+      "Clubs": "trefla",
+      "spades": "negru",
+      "hearts": "rosu",
+      "diamonds": "romb",
+      "clubs": "trefla"
+    };
+    const prefix = suitMap[card.suit] || "negru";
+    return `/images/cards/face/${prefix}${card.rank}.png`;
+  }
+
   function renderState(state) {
     lastState = state;
     clearStatus();
@@ -78,10 +94,11 @@
     if (boardEl) {
       boardEl.innerHTML = "";
       (state.board || []).forEach(card => {
-        const cardEl = document.createElement("div");
-        cardEl.className = "card-chip";
-        cardEl.textContent = card.code;
-        boardEl.appendChild(cardEl);
+        const img = document.createElement("img");
+        img.className = "card-img";
+        img.src = getCardImageUrl(card);
+        img.alt = card.code || "";
+        boardEl.appendChild(img);
       });
     }
 
@@ -118,9 +135,25 @@
         metaCell.textContent = tags.join(" ");
 
         const holeCell = document.createElement("div");
-        holeCell.textContent = player.holeCards.length > 0
-          ? player.holeCards.map(card => card.code).join(" ")
-          : "?? ??";
+        holeCell.className = "player-cards-cell";
+        
+        if (player.holeCards && player.holeCards.length > 0) {
+          player.holeCards.forEach(card => {
+            const img = document.createElement("img");
+            img.className = "card-img-small";
+            img.src = getCardImageUrl(card);
+            holeCell.appendChild(img);
+          });
+        } else {
+          if (!player.hasFolded && state.phase.toLowerCase() !== "waitingforplayers") {
+            for (let i = 0; i < 2; i++) {
+              const img = document.createElement("img");
+              img.className = "card-img-small";
+              img.src = getCardImageUrl(null);
+              holeCell.appendChild(img);
+            }
+          }
+        }
 
         row.appendChild(nameCell);
         row.appendChild(chipsCell);
