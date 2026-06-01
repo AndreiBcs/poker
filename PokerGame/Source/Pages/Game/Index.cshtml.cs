@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
+using Source.Features.Game;
 using Source.Features.Lobby;
 using Source.Infrastructure.Authentication;
 
@@ -10,10 +11,12 @@ namespace Source.Pages.Game;
 public class IndexModel : PageModel
 {
     private readonly LobbyService _lobbyService;
+    private readonly GameService _gameService;
 
-    public IndexModel(LobbyService lobbyService)
+    public IndexModel(LobbyService lobbyService, GameService gameService)
     {
         _lobbyService = lobbyService;
+        _gameService = gameService;
     }
 
     [TempData]
@@ -39,6 +42,12 @@ public class IndexModel : PageModel
             return RedirectToPage("/Index");
         }
 
+        if (!await _gameService.IsUserInLobbyAsync(id.Value, userId.Value))
+        {
+            StatusMessage = "You are not in this lobby.";
+            return RedirectToPage("/Lobby/Index");
+        }
+
         var lobby = await _lobbyService.GetLobbyByIdAsync(id.Value, includePlayers: true);
         if (lobby is null)
         {
@@ -46,17 +55,17 @@ public class IndexModel : PageModel
             return Page();
         }
 
-        if (!lobby.Players.Any(player => player.Id == userId.Value))
-        {
-            StatusMessage = "You are not in this lobby.";
-            return RedirectToPage("/Lobby/Index");
-        }
-
         LobbyId = lobby.Id;
         LobbyName = lobby.Name;
         SmallBlind = lobby.SmallBlind;
         BigBlind = lobby.BigBlind;
         IsLeader = lobby.OwnerUserId == userId.Value;
+
+        var state = await _gameService.GetStateAsync(id.Value, userId.Value);
+        if (state is not null)
+        {
+            // If the game has started, we have a state
+        }
 
         return Page();
     }

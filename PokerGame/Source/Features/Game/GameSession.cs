@@ -4,7 +4,7 @@ using Source.Domain.ValueObjects;
 
 namespace Source.Features.Game;
 
-internal sealed class GameSession
+public sealed class GameSession
 {
     private readonly object _lock = new();
     private readonly HandEvaluator _handEvaluator = new();
@@ -467,7 +467,7 @@ internal sealed class GameSession
         => index >= 0 ? index : null;
 }
 
-internal sealed class GamePlayer
+public sealed class GamePlayer
 {
     public GamePlayer(Guid userId, string username, int seatIndex, int chips)
     {
@@ -520,6 +520,6 @@ internal sealed class GamePlayer
     }
 }
 
-internal sealed record GameResult(int Pot, string HandDescription, IReadOnlyList<GameWinner> Winners);
+public sealed record GameResult(int Pot, string HandDescription, IReadOnlyList<GameWinner> Winners);
 
-internal sealed record GameWinner(Guid UserId, string Username, int Winnings);
+public sealed record GameWinner(Guid UserId, string Username, int Winnings);
