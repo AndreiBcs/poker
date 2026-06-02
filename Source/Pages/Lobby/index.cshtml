@@ -15,11 +15,6 @@
         </div>
     </div>
 
-    @if (!string.IsNullOrWhiteSpace(Model.StatusMessage))
-    {
-        <div id="toastMessage" class="status-message">@Model.StatusMessage</div>
-    }
-
     <div class="lobbies-scroll">
         @if (Model.Lobbies.Count == 0)
         {
@@ -64,7 +59,7 @@
                             }
                             else if (lobby.IsPinned && lobby.CurrentPlayers >= 2)
                             {
-                                <button class="join-btn" type="submit" style="background-color: #00b300; border-color: #00b300; color: white;">
+                                <button class="join-btn" type="button" onclick="location.href='/Game/Index?id=@lobby.Id'" style="background-color: #00b300; border-color: #00b300; color: white;">
                                     Start Game
                                 </button>
                             }
@@ -281,16 +276,6 @@
             document.getElementById("deleteLobbyModal").style.display = "none";
             document.getElementById("profileModal").style.display = "none";
             document.getElementById("updateProfileModal").style.display = "none";
-        }
-
-        // Handle auto-fading toast messages
-
-        const toast = document.getElementById("toastMessage");
-        if (toast) {
-            setTimeout(() => {
-                toast.classList.add("fade-out");
-                setTimeout(() => toast.remove(), 500); // Remove from DOM after fade completes
-            }, 3000);
         }
 
         const openModal = "@(ViewData["OpenModal"] ?? string.Empty)";

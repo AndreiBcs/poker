@@ -1,4 +1,5 @@
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.FileProviders;
 using Source.Features.Game;
 using Source.Features.Lobby;
 using Source.Features.User;
@@ -41,6 +42,14 @@ app.UseHttpsRedirection();
 
 app.UseRouting();
 app.UseWebSockets();
+
+// Serve static files from assets folder
+app.UseStaticFiles(new StaticFileOptions()
+{
+    FileProvider = new PhysicalFileProvider(
+        Path.Combine(builder.Environment.ContentRootPath, "assets")),
+    RequestPath = "/assets"
+});
 
 app.UseAuthentication();
 app.UseAuthorization();
