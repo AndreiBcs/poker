@@ -7,54 +7,72 @@
 
 <div class="game-container" data-lobby-id="@Model.LobbyId" data-is-leader="@Model.IsLeader.ToString().ToLowerInvariant()">
 
-    @if (!string.IsNullOrWhiteSpace(Model.StatusMessage))
-    {
-        <div class="status-message">@Model.StatusMessage</div>
-    }
-
-    @if (Model.LobbyId.HasValue)
-    {
-        <div class="lobby-banner">
-            @Model.LobbyName (Blinds $@Model.SmallBlind / $@Model.BigBlind)
-        </div>
-    }
-
-    <div class="table-background">
-        <img src="/images/poker-table.png" class="poker-table" />
-    </div>
-
-    <div class="ui-overlay">
-        <div class="game-panel">
-            <div class="game-info">
-                <div><strong>Phase:</strong> <span id="phaseValue">Waiting</span></div>
-                <div><strong>Pot:</strong> $<span id="potValue">0</span></div>
-                <div><strong>Turn:</strong> <span id="turnValue">-</span></div>
-                <div id="gameStatus" class="status-message" style="display:none;"></div>
+    <!-- Header with lobby info -->
+    <div class="game-header">
+        @if (Model.LobbyId.HasValue)
+        {
+            <div class="lobby-banner">
+                @Model.LobbyName (Blinds $@Model.SmallBlind / $@Model.BigBlind)
             </div>
-
-            <div id="boardCards" class="board-cards"></div>
-            <div id="playersList" class="players-list"></div>
-        </div>
-
-        <div class="game-actions">
-            @if (Model.IsLeader && Model.LobbyId.HasValue)
-            {
-                <button id="startGameBtn" class="action-btn">Start Game</button>
-            }
-
-            <div class="action-row">
-                <button class="action-btn" data-action="check">Check</button>
-                <button class="action-btn" data-action="call">Call</button>
-                <button class="action-btn" data-action="fold">Fold</button>
+        }
+        <div class="game-info-top">
+            <div class="info-item">
+                <span class="label">Phase:</span>
+                <span id="phaseValue" class="value">Waiting</span>
             </div>
-
-            <div class="action-row">
-                <input id="raiseAmount" type="number" min="1" value="50" />
-                <button class="action-btn" data-action="raise">Raise</button>
+            <div class="info-item">
+                <span class="label">Pot:</span>
+                <span id="potValue" class="value">$0</span>
             </div>
         </div>
     </div>
 
+    <!-- Top Right Controls -->
+    <div class="top-right-controls">
+        <button id="leaveGameBtn" class="control-btn btn-danger">Leave Game</button>
+    </div>
+
+    <!-- Poker Table -->
+    <div class="poker-table-wrapper">
+        <!-- Players Circle -->
+        <div class="players-circle" id="playersContainer"></div>
+
+        <!-- Community Cards (Center) -->
+        <div class="community-cards-container">
+            <div class="community-cards" id="boardCards"></div>
+        </div>
+
+        <!-- Your Cards (Bottom) -->
+        <div class="player-hand-container">
+            <div class="your-cards" id="playerHoleCards"></div>
+        </div>
+    </div>
+
+    <!-- Action Modal (appears dynamically) -->
+    <div id="actionModal" class="action-modal" style="display:none;">
+        <div class="action-modal-content">
+            <div class="modal-header" id="modalHeader"></div>
+            <div class="modal-body" id="modalActions"></div>
+        </div>
+    </div>
+
+    <!-- Bottom Control Panel (Actions) -->
+    <div class="control-panel" id="actionPanel">
+        <!-- Player actions will be rendered here -->
+    </div>
+
+</div>
+
+<!-- Modal for raise input -->
+<div id="raiseModal" class="raise-modal" style="display:none;">
+    <div class="raise-modal-content">
+        <h3>How much to raise?</h3>
+        <div class="raise-input-group">
+            <input id="raiseAmount" type="number" min="1" value="50" placeholder="Amount" />
+            <button id="confirmRaise" class="btn-confirm">Raise</button>
+            <button id="cancelRaise" class="btn-cancel">Cancel</button>
+        </div>
+    </div>
 </div>
 
 @section Scripts {

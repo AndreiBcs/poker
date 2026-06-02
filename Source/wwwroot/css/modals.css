@@ -12,7 +12,7 @@
     z-index: 1001; /* Ensure modal is above backdrop */
     display:flex;
     flex-direction:column;
-    padding: 2rem 1.75rem 1.75rem;
+    padding: 1rem 1.25rem;
     height: auto;
     bottom: auto;
 }
@@ -54,7 +54,7 @@
 .modal-header, .modal h2 {
     color: #FFD700;
     font-size: 2rem;
-    margin-bottom: 1.5rem;
+    margin-bottom: 0.75rem;
     text-align: center;
     font-weight: bold;
     text-shadow: 1px 1px 3px rgba(0, 0, 0, 0.6);
@@ -63,14 +63,14 @@
 .modal form {
     display: flex;
     flex-direction: column;
-    gap: 0.8rem;
+    gap: 0.5rem;
     padding: 0;
 }
 
 .input-group {
     display: flex;
     flex-direction: column;
-    gap: 0.3rem;
+    gap: 0.15rem;
 }
 
 .input-row {
@@ -95,7 +95,7 @@
 .modal input {
     width: 100%;
     box-sizing: border-box;
-    padding: 0.9rem 1rem;
+    padding: 0.6rem 0.8rem;
     border: 1px solid rgba(255, 215, 0, 0.5);
     border-radius: 8px;
     font-size: 1rem;
@@ -131,12 +131,12 @@
     color: #222;
     border: none;
     border-radius: 8px;
-    padding: 1rem;
+    padding: 0.7rem;
     font-size: 1.1rem;
     font-weight: bold;
     cursor: pointer;
     transition: all 0.2s ease;
-    margin-top: 1rem;
+    margin-top: 0.5rem;
     box-shadow: 0 4px 6px rgba(0,0,0,0.3);
     text-transform: uppercase;
 }
@@ -157,7 +157,7 @@
     color: #FFD700;
     border: 2px solid #FFD700;
     border-radius: 8px;
-    padding: 0.9rem;
+    padding: 0.7rem;
     font-size: 1.1rem;
     font-weight: bold;
     cursor: pointer;

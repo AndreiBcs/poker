@@ -22,9 +22,6 @@ public class IndexModel : PageModel
         _sessionService = sessionService;
     }
 
-    [TempData]
-    public string? StatusMessage { get; set; }
-
     public IReadOnlyList<LobbyListItem> Lobbies { get; private set; } = Array.Empty<LobbyListItem>();
 
     public bool HasPinnedLobby => Lobbies.Any(lobby => lobby.IsPinned);
@@ -68,18 +65,11 @@ public class IndexModel : PageModel
 
         if (lobby is null)
         {
-            StatusMessage = "Could not create lobby.";
             await LoadAsync();
             return Page();
         }
 
         var joinResult = await _lobbyService.JoinLobbyAsync(lobby.Id, userId.Value);
-        if (joinResult != LobbyJoinResult.Success)
-        {
-            StatusMessage = "Lobby created, but you could not join it.";
-        }
-
-        StatusMessage = "Lobby created.";
         return RedirectToPage();
     }
 
@@ -92,20 +82,9 @@ public class IndexModel : PageModel
         }
 
         var joinResult = await _lobbyService.JoinLobbyAsync(id, userId.Value);
-        switch (joinResult)
+        if (joinResult == LobbyJoinResult.Success)
         {
-            case LobbyJoinResult.Success:
-                StatusMessage = "Joined lobby.";
-                return RedirectToPage("/Game/Index", new { id });
-            case LobbyJoinResult.LobbyFull:
-                StatusMessage = "Lobby is full.";
-                break;
-            case LobbyJoinResult.LobbyNotFound:
-                StatusMessage = "Lobby not found.";
-                break;
-            default:
-                StatusMessage = "Could not join lobby.";
-                break;
+            return RedirectToPage("/Game/Index", new { id });
         }
 
         return RedirectToPage();
@@ -126,14 +105,12 @@ public class IndexModel : PageModel
             EditLobby.SmallBlind,
             EditLobby.BigBlind));
 
-        StatusMessage = lobby is not null ? "Lobby updated." : "Lobby not found.";
         return RedirectToPage();
     }
 
     public async Task<IActionResult> OnPostDeleteAsync(Guid id)
     {
-        var success = await _lobbyService.DeleteLobbyAsync(id);
-        StatusMessage = success ? "Lobby deleted." : "Lobby not found.";
+        await _lobbyService.DeleteLobbyAsync(id);
         return RedirectToPage();
     }
 
@@ -159,12 +136,10 @@ public class IndexModel : PageModel
 
         if (user is null)
         {
-            StatusMessage = "Could not update profile.";
             return RedirectToPage();
         }
 
         await _sessionService.SignInAsync(HttpContext, user);
-        StatusMessage = "Profile updated.";
         return RedirectToPage();
     }
 
@@ -176,13 +151,7 @@ public class IndexModel : PageModel
             return RedirectToPage("/Index");
         }
 
-        var success = await _userServices.DeleteUserAsync(userId.Value);
-        if (!success)
-        {
-            StatusMessage = "Account not found.";
-            return RedirectToPage();
-        }
-
+        await _userServices.DeleteUserAsync(userId.Value);
         await _sessionService.SignOutAsync(HttpContext);
         return RedirectToPage("/Index");
     }
