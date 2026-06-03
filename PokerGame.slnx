@@ -1,3 +1,5 @@
 <Solution>
   <Project Path="Source/Source.csproj" />
+  <Project Path="Source.Domain.Tests/Source.Domain.Tests.csproj" />
+  <Project Path="Source.Api.Tests/Source.Api.Tests.csproj" />
 </Solution>
