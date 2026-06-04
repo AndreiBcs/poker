@@ -28,6 +28,71 @@ Acest plan acoperă testare manuală (smoke + scenarii de bază) pentru:
 - serviciul pornește fără erori,
 - migrations rulează fără excepții.
 
+
+---
+### TC-AUTH-01 — Sign-up valid => 201 Created
+**Steps:**
+1. Trimite `POST /api/auth/sign-up` cu date valide (username/email/password).
+2. Observă răspunsul.
+
+**Expected Result:**
+- `201 Created`
+- răspunsul conține date user și/sau token (în funcție de implementare).
+
+---
+
+### TC-AUTH-02 — Sign-up invalid => 400 Bad Request
+**Steps:**
+1. Trimite `POST /api/auth/sign-up` cu date invalide (ex: lipsă parolă / email invalid).
+2. Observă răspunsul.
+
+**Expected Result:**
+- `400 Bad Request`
+
+---
+
+### TC-AUTH-03 — Sign-up conflict => 409 Conflict
+**Precondition:** există deja un user cu același username/email.  
+**Steps:**
+1. Trimite `POST /api/auth/sign-up` cu username/email deja existente.
+2. Observă răspunsul.
+
+**Expected Result:**
+- `409 Conflict`
+
+---
+
+### TC-AUTH-04 — Login valid => 200 OK + token
+**Precondition:** există user creat (ex: din TC-AUTH-01).  
+**Steps:**
+1. Trimite `POST /api/auth/login` cu credentiale corecte.
+2. Observă răspunsul.
+
+**Expected Result:**
+- `200 OK`
+- răspunsul conține token JWT (ex: câmp `token`).
+
+---
+
+### TC-AUTH-05 — Login failed => 401 Unauthorized
+**Steps:**
+1. Trimite `POST /api/auth/login` cu user/parolă greșite.
+2. Observă răspunsul.
+
+**Expected Result:**
+- `401 Unauthorized`
+
+---
+
+### TC-AUTH-06 — Use token to connect to GameHub
+**Precondition:** token JWT obținut din TC-AUTH-04.  
+**Steps:**
+1. Conectează-te la `/gamehub` folosind token-ul (ex: `access_token` în query string).
+2. Observă handshake-ul.
+
+**Expected Result:**
+- conexiune acceptată (nu primești 401).
+
 ---
 
 ### TC-02 — GET user (existing)
