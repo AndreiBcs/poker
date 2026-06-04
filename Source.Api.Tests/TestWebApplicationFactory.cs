@@ -9,9 +9,6 @@ using Source.Infrastructure.Persistence;
 using System.Threading.Tasks;
 using Xunit;
 using Microsoft.Extensions.DependencyInjection.Extensions;
-using System.Threading;
-using System.Runtime.InteropServices;
-using SQLitePCL;
 using Microsoft.Data.Sqlite;
 
 namespace Source.Api.Tests;

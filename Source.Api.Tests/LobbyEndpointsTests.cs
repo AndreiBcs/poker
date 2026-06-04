@@ -23,7 +23,7 @@ public class LobbyEndpointsTests : ApiTestBase
 
         var request = new HttpRequestMessage(HttpMethod.Post, "/lobbies")
         {
-            Content = JsonContent.Create(new LobbyCreateRequest("Friday", 6, 50, 100))
+            Content = JsonContent.Create(new LobbyCreateRequest("TestLobby", 6, 50, 100))
         };
         AddAuthHeaders(request, user);
 
@@ -33,7 +33,7 @@ public class LobbyEndpointsTests : ApiTestBase
 
         var lobby = await response.Content.ReadFromJsonAsync<LobbyDetailResponse>();
         Assert.NotNull(lobby);
-        Assert.Equal("Friday", lobby!.Name);
+        Assert.Equal("TestLobby", lobby!.Name);
     }
 
     [Fact]

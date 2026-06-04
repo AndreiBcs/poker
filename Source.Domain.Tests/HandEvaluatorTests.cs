@@ -32,6 +32,6 @@ public class HandEvaluatorTests
 
         Assert.False(string.IsNullOrWhiteSpace(category));
         Assert.False(string.IsNullOrWhiteSpace(description));
-        Assert.True(score > 0);
+        Assert.Equal(1, score);
     }
 }
