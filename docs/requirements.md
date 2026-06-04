@@ -6,21 +6,18 @@ management utilizatori (profil + autentificare/integrare),
 lobby-uri pentru organizarea jocurilor,
 joc în timp real (real-time) folosind SignalR,
 suport pentru două tipuri de joc: Texas Hold’em și Five Card Draw.
-2. Scope MVP (In / Out)
+2. Auth (Autentificare) — Scope MVP
 In Scope (MVP)
-## 2.X Auth (Autentificare) — Scope MVP
-
-### In Scope
 - Sistemul oferă endpoint-uri de autentificare pentru:
-  - **Sign-up** (creare cont)
-  - **Login** (autentificare)
+  - Sign-up (creare cont)
+  - Login (autentificare)
 - La autentificare reușită, sistemul generează un **JWT token** care va fi folosit pentru acces la componente protejate (ex: GameHub `/gamehub`).
 - Sistemul validează input-ul (DTO + validator) și returnează răspunsuri standard pentru erori:
   - `400 Bad Request` pentru date invalide
   - `409 Conflict` pentru conflict (ex: username/email deja există)
   - `401 Unauthorized` pentru login eșuat
 
-### Out of Scope (pentru MVP)
+ Out of Scope (pentru MVP)
 - Resetare parolă / email verification.
 - Refresh tokens și sesiuni avansate.
 - Rate limiting / brute-force protection.
@@ -59,6 +56,16 @@ US-02 (Must) — View user profile
 Ca utilizator,
 vreau să pot vedea datele de profil (id, username),
 pentru ca să știu ce cont este activ.
+
+US-00A (Must) — Sign-up (create account)
+Ca utilizator nou,  
+vreau să îmi pot crea un cont (sign-up),  
+pentru ca să mă pot autentifica și folosi aplicația.
+
+US-00B (Must) — Login (authenticate and receive token)
+Ca utilizator,  
+vreau să mă pot autentifica (login) și să primesc un token JWT,  
+pentru ca să pot accesa hub-ul SignalR și funcționalitățile protejate.
 
 US-03 (Must) — Update username
 Ca utilizator,
