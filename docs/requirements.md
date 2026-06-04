@@ -6,6 +6,7 @@ management utilizatori (profil + autentificare/integrare),
 lobby-uri pentru organizarea jocurilor,
 joc în timp real (real-time) folosind SignalR,
 suport pentru două tipuri de joc: Texas Hold’em și Five Card Draw.
+
 2. Auth (Autentificare) — Scope MVP
 In Scope (MVP)
 - Sistemul oferă endpoint-uri de autentificare pentru:
