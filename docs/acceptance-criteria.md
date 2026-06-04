@@ -1,6 +1,6 @@
 # Poker Arena — Acceptance Criteria (MVP)
 
-## 1) UserService — API `/api/users`
+## 1A) UserService — API `/api/users`
 
 ### AC-US-GET-01 — Get user by id
 **Given** există un user cu `id` în baza de date,  
@@ -46,6 +46,38 @@
 **Then** primesc `404 NotFound`.
 
 ---
+
+## 1B) Auth — `/api/auth`
+
+### AC-AUTH-SIGNUP-01 — Sign-up valid => created
+**Given** datele de sign-up sunt valide (username/email/parolă),  
+**When** fac `POST /api/auth/sign-up`,  
+**Then** primesc `201 Created` și un răspuns care conține datele user-ului și token (dacă este implementat astfel).
+
+### AC-AUTH-SIGNUP-02 — Sign-up invalid => bad request
+**When** fac `POST /api/auth/sign-up` cu date invalide (ex: câmpuri lipsă / format invalid),  
+**Then** primesc `400 Bad Request`.
+
+### AC-AUTH-SIGNUP-03 — Sign-up conflict => conflict
+**Given** există deja un user cu același username sau email,  
+**When** fac `POST /api/auth/sign-up`,  
+**Then** primesc `409 Conflict`.
+
+---
+
+### AC-AUTH-LOGIN-01 — Login valid => ok
+**Given** user-ul există și credentialele sunt corecte,  
+**When** fac `POST /api/auth/login`,  
+**Then** primesc `200 OK` și un token JWT (ex: `token` în response).
+
+### AC-AUTH-LOGIN-02 — Login invalid input => bad request
+**When** fac `POST /api/auth/login` cu input invalid (câmpuri lipsă / format invalid),  
+**Then** primesc `400 Bad Request`.
+
+### AC-AUTH-LOGIN-03 — Login failed => unauthorized
+**Given** credentialele sunt greșite (user inexistent sau parolă greșită),  
+**When** fac `POST /api/auth/login`,  
+**Then** primesc `401 Unauthorized`.
 
 ## 2) SignalR (GameService) — `/gamehub`
 
