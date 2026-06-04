@@ -8,6 +8,23 @@ joc în timp real (real-time) folosind SignalR,
 suport pentru două tipuri de joc: Texas Hold’em și Five Card Draw.
 2. Scope MVP (In / Out)
 In Scope (MVP)
+## 2.X Auth (Autentificare) — Scope MVP
+
+### In Scope
+- Sistemul oferă endpoint-uri de autentificare pentru:
+  - **Sign-up** (creare cont)
+  - **Login** (autentificare)
+- La autentificare reușită, sistemul generează un **JWT token** care va fi folosit pentru acces la componente protejate (ex: GameHub `/gamehub`).
+- Sistemul validează input-ul (DTO + validator) și returnează răspunsuri standard pentru erori:
+  - `400 Bad Request` pentru date invalide
+  - `409 Conflict` pentru conflict (ex: username/email deja există)
+  - `401 Unauthorized` pentru login eșuat
+
+### Out of Scope (pentru MVP)
+- Resetare parolă / email verification.
+- Refresh tokens și sesiuni avansate.
+- Rate limiting / brute-force protection.
+
 User Management
 
 Sistemul poate crea un utilizator (prin eveniment de tip user_registered).
@@ -22,7 +39,6 @@ Există logică de joc pentru:
 Texas Hold’em: PreFlop → Flop → Turn → River → Showdown
 Five Card Draw: InitialDeal → DrawCards → SecondBetting → Showdown
 Există evaluare de mână (hand evaluation) folosind o librărie externă (ranking/category/description).
-UI demo
 
 Există pagini UI/demo (home/login/lobbies/profile/game) pentru prezentarea flow-ului.
 Out of Scope (pentru MVP / demo)
