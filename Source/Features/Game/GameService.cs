@@ -22,24 +22,43 @@ public sealed class GameService
 
     public async Task<GameStartOutcome> StartGameAsync(Guid lobbyId, Guid userId)
     {
-        var lobby = await _db.Lobbies.Include(lobby => lobby.Players)
-            .FirstOrDefaultAsync(lobby => lobby.Id == lobbyId);
+        var lobby = await _db.Lobbies.Include(l => l.Players)
+            .FirstOrDefaultAsync(l => l.Id == lobbyId);
+
+        GameSession? session = null;
         if (lobby is null)
         {
-            return new GameStartOutcome(GameStartStatus.LobbyNotFound, "Lobby not found.");
-        }
+            if (!_store.TryGet(lobbyId, out session))
+            {
+                return new GameStartOutcome(GameStartStatus.LobbyNotFound, "Lobby not found.");
+            }
 
-        if (!lobby.Players.Any(player => player.Id == userId))
+            var isMember = session.WithLock(() => session.Players.Any(player => player.UserId == userId));
+            if (!isMember)
+            {
+                return new GameStartOutcome(GameStartStatus.NotInLobby, "You are not in this lobby.");
+            }
+
+            if (session.OwnerUserId.HasValue && session.OwnerUserId.Value != userId)
+            {
+                return new GameStartOutcome(GameStartStatus.NotLeader, "Only the lobby leader can start the game.");
+            }
+        }
+        else
         {
-            return new GameStartOutcome(GameStartStatus.NotInLobby, "You are not in this lobby.");
+            if (!lobby.Players.Any(player => player.Id == userId))
+            {
+                return new GameStartOutcome(GameStartStatus.NotInLobby, "You are not in this lobby.");
+            }
+
+            if (lobby.OwnerUserId != userId)
+            {
+                return new GameStartOutcome(GameStartStatus.NotLeader, "Only the lobby leader can start the game.");
+            }
+
+            session = EnsureSession(lobby);
         }
 
-        if (lobby.OwnerUserId != userId)
-        {
-            return new GameStartOutcome(GameStartStatus.NotLeader, "Only the lobby leader can start the game.");
-        }
-
-        var session = EnsureSession(lobby);
         var result = session.StartHand();
         if (result == GameStartStatus.NotEnoughPlayers)
         {
@@ -49,6 +68,11 @@ public sealed class GameService
         if (result == GameStartStatus.AlreadyInProgress)
         {
             return new GameStartOutcome(result, "A hand is already in progress.");
+        }
+
+        if (result == GameStartStatus.Started && lobby is not null)
+        {
+            await CloseLobbyAfterStartAsync(lobby);
         }
 
         await BroadcastStateAsync(lobbyId);
@@ -73,7 +97,18 @@ public sealed class GameService
     }
 
     public async Task<bool> IsUserInLobbyAsync(Guid lobbyId, Guid userId)
-        => await _db.Users.AnyAsync(user => user.Id == userId && user.LobbyId == lobbyId);
+    {
+        if (_store.TryGet(lobbyId, out var session))
+        {
+            var isMember = session.WithLock(() => session.Players.Any(player => player.UserId == userId));
+            if (isMember)
+            {
+                return true;
+            }
+        }
+
+        return await _db.Users.AnyAsync(user => user.Id == userId && user.LobbyId == lobbyId);
+    }
 
     public async Task<GameStateDto?> GetStateAsync(Guid lobbyId, Guid userId)
     {
@@ -103,9 +138,37 @@ public sealed class GameService
         if (_store.TryGet(lobbyId, out var session))
         {
             session.UpdatePlayerConnection(userId, null);
+
+            var lobbyExists = await _db.Lobbies.AnyAsync(lobby => lobby.Id == lobbyId);
+            if (!lobbyExists)
+            {
+                var left = session.HandlePlayerLeft(userId);
+                if (left && !session.HasEnoughPlayers())
+                {
+                    session.ResetToWaiting();
+                }
+            }
         }
 
         await BroadcastStateAsync(lobbyId);
+    }
+
+    public async Task<GameLobbyInfo?> GetLobbyInfoAsync(Guid lobbyId)
+    {
+        if (_store.TryGet(lobbyId, out var session))
+        {
+            return session.WithLock(() => new GameLobbyInfo(
+                lobbyId,
+                session.LobbyName,
+                session.SmallBlind,
+                session.BigBlind,
+                session.OwnerUserId));
+        }
+
+        var lobby = await _db.Lobbies.AsNoTracking().FirstOrDefaultAsync(l => l.Id == lobbyId);
+        return lobby is null
+            ? null
+            : new GameLobbyInfo(lobby.Id, lobby.Name, lobby.SmallBlind, lobby.BigBlind, lobby.OwnerUserId);
     }
 
     public async Task BroadcastStateAsync(Guid lobbyId)
@@ -132,6 +195,8 @@ public sealed class GameService
 
         var session = _store.GetOrAdd(lobby.Id, () => new GameSession(
             lobby.Id,
+            lobby.Name,
+            lobby.OwnerUserId,
             lobby.SmallBlind,
             lobby.BigBlind,
             players,
@@ -139,6 +204,7 @@ public sealed class GameService
 
         if (session.Phase is GamePhase.WaitingForPlayers or GamePhase.Showdown)
         {
+            session.UpdateLobbyInfo(lobby.Name, lobby.OwnerUserId);
             session.UpdateBlinds(lobby.SmallBlind, lobby.BigBlind);
             session.SyncPlayers(players, StartingChips);
         }
@@ -154,9 +220,34 @@ public sealed class GameService
 
     private async Task<GameSession?> EnsureSessionAsync(Guid lobbyId)
     {
-        var lobby = await _db.Lobbies.Include(lobby => lobby.Players)
-            .FirstOrDefaultAsync(lobby => lobby.Id == lobbyId);
-        return lobby is null ? null : EnsureSession(lobby);
+        if (_store.TryGet(lobbyId, out var session))
+        {
+            var lobby = await _db.Lobbies.Include(l => l.Players)
+                .FirstOrDefaultAsync(l => l.Id == lobbyId);
+            return lobby is null ? session : EnsureSession(lobby);
+        }
+
+        var fallbackLobby = await _db.Lobbies.Include(l => l.Players)
+            .FirstOrDefaultAsync(l => l.Id == lobbyId);
+        return fallbackLobby is null ? null : EnsureSession(fallbackLobby);
+    }
+
+    private async Task CloseLobbyAfterStartAsync(Domain.Entities.Lobby lobby)
+    {
+        try
+        {
+            foreach (var player in lobby.Players)
+            {
+                player.LobbyId = null;
+            }
+
+            _db.Lobbies.Remove(lobby);
+            await _db.SaveChangesAsync();
+        }
+        catch (DbUpdateException)
+        {
+            // Best-effort cleanup; game session should keep running.
+        }
     }
 
     private GameStateDto BuildState(GameSession session, Guid viewerId)

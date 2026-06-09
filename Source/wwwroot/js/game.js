@@ -26,6 +26,7 @@
 
   let lastState = null;
   let currentAction = null;
+  let startRequested = false;
 
   const protocol = window.location.protocol === "https:" ? "wss" : "ws";
   const socketUrl = `${protocol}://${window.location.host}/ws/game?lobbyId=${lobbyId}`;
@@ -424,10 +425,35 @@
     }
 
     updateControls(state, phaseLower);
+    maybeAutoStart(state, phaseLower);
   }
 
   function updateControls(state, phaseLower) {
     // No game start button anymore - game is automatic
+  }
+
+  function maybeAutoStart(state, phaseLower) {
+    if (!isLeader) {
+      return;
+    }
+
+    if (phaseLower !== "waitingforplayers") {
+      startRequested = false;
+      return;
+    }
+
+    const activePlayers = (state.players || []).filter(player => player.chips > 0).length;
+    if (activePlayers < 2) {
+      startRequested = false;
+      return;
+    }
+
+    if (startRequested) {
+      return;
+    }
+
+    startRequested = true;
+    sendMessage("start_game", {});
   }
 
   socket.addEventListener("open", () => {
@@ -458,6 +484,10 @@
     if (message.type === "state") {
       renderState(message.payload);
       return;
+    }
+
+    if (message.type === "error") {
+      setStatus(message.payload?.message || "Action failed.", "error");
     }
   });
 

@@ -11,6 +11,8 @@ public sealed class GameSession
     private Deck? _deck;
 
     public Guid LobbyId { get; }
+    public string LobbyName { get; private set; }
+    public Guid? OwnerUserId { get; private set; }
     public int SmallBlind { get; private set; }
     public int BigBlind { get; private set; }
     public int Pot { get; private set; }
@@ -26,9 +28,11 @@ public sealed class GameSession
     public List<GamePlayer> Players { get; } = new();
     public List<Card> Board { get; } = new();
 
-    public GameSession(Guid lobbyId, int smallBlind, int bigBlind, IEnumerable<(Guid UserId, string Username)> players, int startingChips)
+    public GameSession(Guid lobbyId, string lobbyName, Guid? ownerUserId, int smallBlind, int bigBlind, IEnumerable<(Guid UserId, string Username)> players, int startingChips)
     {
         LobbyId = lobbyId;
+        LobbyName = lobbyName;
+        OwnerUserId = ownerUserId;
         SmallBlind = smallBlind;
         BigBlind = bigBlind;
         SyncPlayers(players, startingChips);
@@ -81,6 +85,15 @@ public sealed class GameSession
         }
     }
 
+    public void UpdateLobbyInfo(string lobbyName, Guid? ownerUserId)
+    {
+        lock (_lock)
+        {
+            LobbyName = lobbyName;
+            OwnerUserId = ownerUserId;
+        }
+    }
+
     public T WithLock<T>(Func<T> work)
     {
         lock (_lock)
@@ -97,6 +110,79 @@ public sealed class GameSession
             if (player is not null)
             {
                 player.IpAddress = ipAddress;
+            }
+        }
+    }
+
+    public bool HandlePlayerLeft(Guid userId)
+    {
+        lock (_lock)
+        {
+            var playerIndex = Players.FindIndex(p => p.UserId == userId);
+            if (playerIndex < 0)
+            {
+                return false;
+            }
+
+            var player = Players[playerIndex];
+            player.HasFolded = true;
+            player.IsAllIn = false;
+            player.HasActedThisRound = true;
+            player.Chips = 0;
+            player.CurrentBet = 0;
+            player.HoleCards.Clear();
+
+            if (Phase is GamePhase.WaitingForPlayers or GamePhase.Showdown)
+            {
+                return true;
+            }
+
+            if (TryFinishHand())
+            {
+                return true;
+            }
+
+            if (TryAdvanceRound())
+            {
+                return true;
+            }
+
+            if (CurrentTurnIndex.HasValue && CurrentTurnIndex.Value < Players.Count && Players[CurrentTurnIndex.Value].UserId == userId)
+            {
+                CurrentTurnIndex = NormalizeTurnIndex(FindNextIndex(CurrentTurnIndex.Value, p => p.CanAct));
+            }
+
+            return true;
+        }
+    }
+
+    public bool HasEnoughPlayers()
+    {
+        lock (_lock)
+        {
+            return Players.Count(player => player.Chips > 0) >= 2;
+        }
+    }
+
+    public void ResetToWaiting()
+    {
+        lock (_lock)
+        {
+            Phase = GamePhase.WaitingForPlayers;
+            Pot = 0;
+            CurrentBet = 0;
+            MinRaise = BigBlind;
+            Board.Clear();
+            CurrentTurnIndex = null;
+            LastResult = null;
+
+            foreach (var player in Players)
+            {
+                player.CurrentBet = 0;
+                player.HasFolded = false;
+                player.IsAllIn = false;
+                player.HasActedThisRound = false;
+                player.HoleCards.Clear();
             }
         }
     }

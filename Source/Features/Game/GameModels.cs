@@ -70,3 +70,5 @@ public record GameWinnerDto(Guid UserId, string Username, int Winnings);
 public record GameErrorDto(string Message);
 
 public record GameInfoDto(string Message);
+
+public record GameLobbyInfo(Guid LobbyId, string LobbyName, int SmallBlind, int BigBlind, Guid? OwnerUserId);
