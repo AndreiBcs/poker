@@ -63,17 +63,25 @@
 
   // Calculate player positions in a circle
   function calculatePlayerPositions(totalPlayers) {
-    const positions = [];
-    const radius = 150;
-    const centerX = 250;
-    const centerY = 190;
+    const wrapper = document.querySelector(".poker-table-wrapper");
+    const bounds = wrapper ? wrapper.getBoundingClientRect() : { width: 500, height: 380 };
+    
+    const centerX = bounds.width / 2;
+    const centerY = bounds.height / 2;
+    // Scale positioning radiuses dynamically inside the fluid container
+    const radiusX = bounds.width * 0.38;
+    const radiusY = bounds.height * 0.34;
     const startAngle = -Math.PI / 2; // Start at top
 
+    // FIXED: Removed animation due to stability risk. (Calculated UI scale dynamically instead)
+    const positions = [];
     for (let i = 0; i < totalPlayers; i++) {
-      const angle = startAngle + (i / totalPlayers) * 2 * Math.PI;
-      const x = centerX + radius * Math.cos(angle);
-      const y = centerY + radius * Math.sin(angle);
-      positions.push({ x, y, angle });
+        const angle = startAngle + (i / totalPlayers) * 2 * Math.PI;
+        positions.push({
+            x: centerX + radiusX * Math.cos(angle),
+            y: centerY + radiusY * Math.sin(angle),
+            angle
+        });
     }
 
     return positions;
@@ -146,19 +154,13 @@
 
       // Header
       const headerEl = document.createElement("div");
-      headerEl.style.fontSize = "1rem";
-      headerEl.style.fontWeight = "700";
-      headerEl.style.color = "#f2d479";
-      headerEl.style.marginBottom = "12px";
-      headerEl.style.textAlign = "center";
+      headerEl.className = "action-panel-title";
       headerEl.textContent = `${player.username}'s Turn - What's your move?`;
       actionPanelEl.appendChild(headerEl);
 
       // Actions Container
       const actionsContainer = document.createElement("div");
-      actionsContainer.style.display = "grid";
-      actionsContainer.style.gridTemplateColumns = "1fr 1fr 1fr 1fr";
-      actionsContainer.style.gap = "10px";
+      actionsContainer.className = "action-panel-actions";
 
       // Check button
       if (callAmount === 0) {

@@ -5,6 +5,8 @@ namespace Source.Infrastructure.Authentication
 {
     public static class CookieAuthenticationExtensions
     {
+        public const string CookieName = "PokerGame.Auth";
+
         public static IServiceCollection AddCookieAuthentication(this IServiceCollection services)
         {
             services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme)
@@ -12,8 +14,13 @@ namespace Source.Infrastructure.Authentication
                 {
                     options.LoginPath = "/";
                     options.AccessDeniedPath = "/";
-                    options.Cookie.Name = "PokerGame.Auth";
-                    options.SlidingExpiration = true;
+                    options.Cookie.Name = CookieName;
+                    options.Cookie.HttpOnly = true;
+                    options.Cookie.SameSite = SameSiteMode.Lax;
+                    options.Cookie.SecurePolicy = CookieSecurePolicy.SameAsRequest;
+                    options.Cookie.MaxAge = null;
+                    options.ExpireTimeSpan = TimeSpan.FromMinutes(30);
+                    options.SlidingExpiration = false;
                     options.Events = new CookieAuthenticationEvents
                     {
                         OnRedirectToLogin = context =>

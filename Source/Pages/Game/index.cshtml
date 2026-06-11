@@ -32,19 +32,23 @@
         <button id="leaveGameBtn" class="control-btn btn-danger">Leave Game</button>
     </div>
 
-    <!-- Poker Table -->
-    <div class="poker-table-wrapper">
-        <!-- Players Circle -->
-        <div class="players-circle" id="playersContainer"></div>
-
-        <!-- Community Cards (Center) -->
-        <div class="community-cards-container">
-            <div class="community-cards" id="boardCards"></div>
+    <div class="game-stage">
+        <!-- Player Cards (Left Side) -->
+        <div class="player-hand-dock">
+            <div class="player-hand-container">
+                <div class="your-cards" id="playerHoleCards"></div>
+            </div>
         </div>
 
-        <!-- Your Cards (Bottom) -->
-        <div class="player-hand-container">
-            <div class="your-cards" id="playerHoleCards"></div>
+        <!-- Poker Table -->
+        <div class="poker-table-wrapper">
+            <!-- Players Circle -->
+            <div class="players-circle" id="playersContainer"></div>
+
+            <!-- Community Cards (Center) -->
+            <div class="community-cards-container">
+                <div class="community-cards" id="boardCards"></div>
+            </div>
         </div>
     </div>
 

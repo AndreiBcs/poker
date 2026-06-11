@@ -18,11 +18,19 @@ namespace Source.Infrastructure.Authentication
 
             var identity = new ClaimsIdentity(claims, CookieAuthenticationDefaults.AuthenticationScheme);
             var principal = new ClaimsPrincipal(identity);
+            var properties = new AuthenticationProperties
+            {
+                IsPersistent = false,
+                AllowRefresh = false
+            };
 
-            return httpContext.SignInAsync(CookieAuthenticationDefaults.AuthenticationScheme, principal);
+            return httpContext.SignInAsync(CookieAuthenticationDefaults.AuthenticationScheme, principal, properties);
         }
 
-        public Task SignOutAsync(HttpContext httpContext)
-            => httpContext.SignOutAsync(CookieAuthenticationDefaults.AuthenticationScheme);
+        public async Task SignOutAsync(HttpContext httpContext)
+        {
+            await httpContext.SignOutAsync(CookieAuthenticationDefaults.AuthenticationScheme);
+            httpContext.Response.Cookies.Delete(CookieAuthenticationExtensions.CookieName);
+        }
     }
 }

@@ -57,11 +57,13 @@ public class IndexModel : PageModel
             return RedirectToPage("/Index");
         }
 
+        // FIXED: Added CreateLobby.GameType to the constructor
         var lobby = await _lobbyService.CreateLobbyAsync(new LobbyCreateRequest(
             CreateLobby.Name,
             CreateLobby.MaxPlayers,
             CreateLobby.SmallBlind,
-            CreateLobby.BigBlind), userId.Value);
+            CreateLobby.BigBlind,
+            CreateLobby.GameType), userId.Value);
 
         if (lobby is null)
         {
@@ -72,7 +74,6 @@ public class IndexModel : PageModel
         var joinResult = await _lobbyService.JoinLobbyAsync(lobby.Id, userId.Value);
         return RedirectToPage();
     }
-
     public async Task<IActionResult> OnPostJoinAsync(Guid id)
     {
         var userId = User.GetUserId();
@@ -90,7 +91,7 @@ public class IndexModel : PageModel
         return RedirectToPage();
     }
 
-    public async Task<IActionResult> OnPostEditAsync()
+   public async Task<IActionResult> OnPostEditAsync()
     {
         if (!TryValidateEditLobby())
         {
@@ -99,15 +100,16 @@ public class IndexModel : PageModel
             return Page();
         }
 
+        // FIXED: Added EditLobby.GameType to the constructor
         var lobby = await _lobbyService.UpdateLobbyAsync(EditLobby.Id, new LobbyUpdateRequest(
             EditLobby.Name,
             EditLobby.MaxPlayers,
             EditLobby.SmallBlind,
-            EditLobby.BigBlind));
+            EditLobby.BigBlind,
+            EditLobby.GameType));
 
         return RedirectToPage();
     }
-
     public async Task<IActionResult> OnPostDeleteAsync(Guid id)
     {
         await _lobbyService.DeleteLobbyAsync(id);
@@ -234,7 +236,7 @@ public class IndexModel : PageModel
 
     public record ProfileView(string Username = "", string Email = "");
 
-    public class CreateLobbyInput
+   public class CreateLobbyInput
     {
         [Required, StringLength(60, MinimumLength = 3)]
         public string Name { get; set; } = "Lobby";
@@ -247,6 +249,8 @@ public class IndexModel : PageModel
 
         [Range(1, 100000)]
         public int BigBlind { get; set; } = 50;
+
+        public Source.Domain.Enums.GameType GameType { get; set; } = Source.Domain.Enums.GameType.TexasHoldem; // <-- FIXED
     }
 
     public class EditLobbyInput
@@ -265,6 +269,8 @@ public class IndexModel : PageModel
 
         [Range(1, 100000)]
         public int BigBlind { get; set; } = 50;
+        
+        public Source.Domain.Enums.GameType GameType { get; set; } = Source.Domain.Enums.GameType.TexasHoldem; // <-- FIXED
     }
 
     public class UpdateProfileInput

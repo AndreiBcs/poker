@@ -80,7 +80,6 @@
 <!-- Modal Backdrops -->
 <div id="modalBackdropLobby" class="modal-backdrop-custom" style="display:none;" onclick="closeAllLobbyModals()"></div>
 
-<!-- Create Lobby Modal -->
 <div id="createLobbyModal" class="modal" style="display:none;">
     <h2 class="modal-header">New Table</h2>
     <button class="close-modal-btn" type="button" onclick="closeAllLobbyModals()">×</button>
@@ -92,6 +91,14 @@
             <div class="modal-label">Table Name</div>
             <input asp-for="CreateLobby.Name" type="text" placeholder="e.g. High Rollers" />
             <span asp-validation-for="CreateLobby.Name"></span>
+        </div>
+
+        <div class="input-group">
+            <div class="modal-label">Game Mode</div>
+            <select asp-for="CreateLobby.GameType" 
+                    asp-items="Html.GetEnumSelectList<Source.Domain.Enums.GameType>()" 
+                    style="width: 100%; padding: 0.8rem; border-radius: 6px; background: rgba(0,0,0,0.5); border: 1px solid #555; color: white;">
+            </select>
         </div>
 
         <div class="input-group">
@@ -277,6 +284,10 @@
             document.getElementById("profileModal").style.display = "none";
             document.getElementById("updateProfileModal").style.display = "none";
         }
+
+        // FIXED: Replaced manual button logic with real-time SSE listener
+        const sse = new EventSource("/lobbies/stream");
+        sse.addEventListener("lobbies", () => location.reload()); // SSR refresh
 
         const openModal = "@(ViewData["OpenModal"] ?? string.Empty)";
         if (openModal === "create") {

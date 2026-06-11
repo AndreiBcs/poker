@@ -1,4 +1,5 @@
 using Microsoft.EntityFrameworkCore;
+using Microsoft.AspNetCore.DataProtection;
 using Microsoft.Extensions.FileProviders;
 using Source.Features.Game;
 using Source.Features.Lobby;
@@ -8,8 +9,17 @@ using Source.Infrastructure.Persistence;
 
 var builder = WebApplication.CreateBuilder(args);
 
-builder.Services.AddRazorPages();
+if (builder.Environment.IsDevelopment())
+{
+    builder.Services.AddDataProtection().UseEphemeralDataProtectionProvider();
+}
+
 builder.Services.AddCookieAuthentication();
+builder.Services.AddRazorPages(options =>
+{
+    options.Conventions.AuthorizeFolder("/Lobby");
+    options.Conventions.AuthorizeFolder("/Game");
+});
 builder.Services.AddScoped<UserServices>();
 builder.Services.AddScoped<LobbyService>();
 builder.Services.AddScoped<UserSessionService>();
@@ -17,6 +27,7 @@ builder.Services.AddSingleton<GameStateStore>();
 builder.Services.AddSingleton<GameConnectionManager>();
 builder.Services.AddScoped<GameService>();
 builder.Services.AddScoped<GameWebSocketHandler>();
+builder.Services.AddSingleton<LobbyUpdateNotifier>();
 var dbPath = Path.Combine(builder.Environment.ContentRootPath, "app.db");
 var connectionString = $"Data Source={dbPath}";
 
@@ -58,7 +69,6 @@ app.MapUserEndpoints();
 app.MapLobbyEndpoints();
 app.MapGameEndpoints();
 app.MapStaticAssets();
-app.MapRazorPages()
-   .WithStaticAssets();
+app.MapRazorPages();
 
 app.Run();

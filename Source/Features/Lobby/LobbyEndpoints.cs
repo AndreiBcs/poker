@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Http.HttpResults;
 using Source.Infrastructure.Authentication;
+using System.Threading.Channels; // ADDED for the SSE Channel
 
 namespace Source.Features.Lobby
 {
@@ -8,6 +9,40 @@ namespace Source.Features.Lobby
         public static void MapLobbyEndpoints(this WebApplication app)
         {
             var group = app.MapGroup("/lobbies").RequireAuthorization();
+
+            // ====================================================================
+            // NEW: Real-time SSE streaming endpoint for lobby refreshes
+            // ====================================================================
+            group.MapGet("/stream", async (HttpContext context, LobbyUpdateNotifier notifier) =>
+            {
+                context.Response.Headers.Append("Content-Type", "text/event-stream");
+                context.Response.Headers.Append("Cache-Control", "no-cache");
+                context.Response.Headers.Append("Connection", "keep-alive");
+
+                // Use System.Threading.Channels to safely queue events without race conditions
+                var channel = Channel.CreateUnbounded<bool>();
+                void OnUpdate() => channel.Writer.TryWrite(true);
+                
+                // Subscribe exactly once
+                notifier.OnLobbyUpdated += OnUpdate;
+
+                try
+                {
+                    // ReadAllAsync pauses safely until an event is written, and handles rapid fires cleanly
+                    await foreach (var _ in channel.Reader.ReadAllAsync(context.RequestAborted))
+                    {
+                        await context.Response.WriteAsync("event: lobbies\ndata: update\n\n", context.RequestAborted);
+                        await context.Response.Body.FlushAsync(context.RequestAborted);
+                    }
+                }
+                finally
+                {
+                    // CRITICAL: Unregister to prevent memory leak on client disconnect.
+                    notifier.OnLobbyUpdated -= OnUpdate;
+                    channel.Writer.TryComplete();
+                }
+            });
+            // ====================================================================
 
             group.MapGet("/{lobbyId:guid}", async Task<Results<Ok<LobbyDetailResponse>, NotFound>>
                 (Guid lobbyId, LobbyService lobbyService) =>

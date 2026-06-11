@@ -62,6 +62,7 @@ public sealed class GameService
         var result = session.StartHand();
         if (result == GameStartStatus.NotEnoughPlayers)
         {
+            await BroadcastStateAsync(lobbyId);
             return new GameStartOutcome(result, "Not enough players to start.");
         }
 
@@ -118,7 +119,7 @@ public sealed class GameService
             return null;
         }
 
-        return BuildState(session, userId);
+        return session.WithLock(() => BuildState(session, userId));
     }
 
     public async Task RegisterConnectionAsync(Guid lobbyId, Guid userId, string? ipAddress)
@@ -180,7 +181,7 @@ public sealed class GameService
 
         await _connections.BroadcastAsync(lobbyId, userId =>
         {
-            var state = BuildState(session, userId);
+            var state = session.WithLock(() => BuildState(session, userId));
             return new { type = "state", payload = state };
         });
     }
@@ -200,7 +201,8 @@ public sealed class GameService
             lobby.SmallBlind,
             lobby.BigBlind,
             players,
-            StartingChips));
+            StartingChips,
+            lobby.GameType));
 
         if (session.Phase is GamePhase.WaitingForPlayers or GamePhase.Showdown)
         {

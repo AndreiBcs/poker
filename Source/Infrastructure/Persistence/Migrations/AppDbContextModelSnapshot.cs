@@ -47,6 +47,9 @@ namespace Source.Migrations
                     b.Property<int>("BigBlind")
                         .HasColumnType("INTEGER");
 
+                    b.Property<int>("GameType")
+                        .HasColumnType("INTEGER");
+
                     b.Property<int>("MaxPlayers")
                         .HasColumnType("INTEGER");
 

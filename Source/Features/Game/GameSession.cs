@@ -1,34 +1,43 @@
 using Source.Domain.Enums;
 using Source.Domain.GameLogic;
 using Source.Domain.ValueObjects;
+using Source.Features.Game.Rules;
 
 namespace Source.Features.Game;
 
 public sealed class GameSession
 {
+    private readonly IGameModeRules _rules;
     private readonly object _lock = new();
     private readonly HandEvaluator _handEvaluator = new();
-    private Deck? _deck;
+   internal Deck? _deck;
 
     public Guid LobbyId { get; }
-    public string LobbyName { get; private set; }
-    public Guid? OwnerUserId { get; private set; }
-    public int SmallBlind { get; private set; }
-    public int BigBlind { get; private set; }
-    public int Pot { get; private set; }
-    public int CurrentBet { get; private set; }
-    public int MinRaise { get; private set; }
-    public GamePhase Phase { get; private set; } = GamePhase.WaitingForPlayers;
-    public int DealerIndex { get; private set; } = -1;
-    public int SmallBlindIndex { get; private set; } = -1;
-    public int BigBlindIndex { get; private set; } = -1;
-    public int? CurrentTurnIndex { get; private set; }
-    public GameResult? LastResult { get; private set; }
-
+public string LobbyName { get; internal set; }
+    public Guid? OwnerUserId { get; internal set; }
+    public int SmallBlind { get; internal set; }
+    public int BigBlind { get; internal set; }
+    public int Pot { get; internal set; }
+    public int CurrentBet { get; internal set; }
+    public int MinRaise { get; internal set; }
+    public GamePhase Phase { get; internal set; } = GamePhase.WaitingForPlayers;
+    public int DealerIndex { get; internal set; } = -1;
+    public int SmallBlindIndex { get; internal set; } = -1;
+    public int BigBlindIndex { get; internal set; } = -1;
+    public int? CurrentTurnIndex { get; internal set; }
+    public GameResult? LastResult { get; internal set; }
     public List<GamePlayer> Players { get; } = new();
     public List<Card> Board { get; } = new();
 
-    public GameSession(Guid lobbyId, string lobbyName, Guid? ownerUserId, int smallBlind, int bigBlind, IEnumerable<(Guid UserId, string Username)> players, int startingChips)
+    public GameSession(
+        Guid lobbyId, 
+        string lobbyName, 
+        Guid? ownerUserId, 
+        int smallBlind, 
+        int bigBlind, 
+        List<(Guid Id, string Username)> players, 
+        int startingChips,
+        GameType gameType)
     {
         LobbyId = lobbyId;
         LobbyName = lobbyName;
@@ -36,7 +45,15 @@ public sealed class GameSession
         SmallBlind = smallBlind;
         BigBlind = bigBlind;
         SyncPlayers(players, startingChips);
+        _rules = gameType switch
+        {
+            GameType.TexasHoldem => new TexasHoldemRules(),
+            GameType.FiveCardDraw => new FiveCardDrawRules(),
+            _ => throw new NotSupportedException($"Game type {gameType} is not supported.")
+        };
+        
     }
+    
 
     public void SyncPlayers(IEnumerable<(Guid UserId, string Username)> players, int startingChips)
     {
@@ -168,193 +185,42 @@ public sealed class GameSession
     {
         lock (_lock)
         {
-            Phase = GamePhase.WaitingForPlayers;
-            Pot = 0;
-            CurrentBet = 0;
-            MinRaise = BigBlind;
-            Board.Clear();
-            CurrentTurnIndex = null;
-            LastResult = null;
-
-            foreach (var player in Players)
-            {
-                player.CurrentBet = 0;
-                player.HasFolded = false;
-                player.IsAllIn = false;
-                player.HasActedThisRound = false;
-                player.HoleCards.Clear();
-            }
+            ResetTableForNextHand();
+            DealerIndex = -1;
         }
     }
 
-    public GameStartStatus StartHand()
+    internal void PrepareForNewHand()
     {
-        lock (_lock)
-        {
-            if (Phase is GamePhase.PreFlop or GamePhase.Flop or GamePhase.Turn or GamePhase.River)
-            {
-                return GameStartStatus.AlreadyInProgress;
-            }
-
-            if (Players.Count(p => p.Chips > 0) < 2)
-            {
-                Phase = GamePhase.WaitingForPlayers;
-                return GameStartStatus.NotEnoughPlayers;
-            }
-
-            LastResult = null;
-            Pot = 0;
-            CurrentBet = 0;
-            MinRaise = BigBlind;
-            Board.Clear();
-
-            foreach (var player in Players)
-            {
-                player.ResetForHand();
-            }
-
-            var deck = new Deck();
-            _deck = deck;
-            DealerIndex = FindNextIndex(DealerIndex, player => player.Chips > 0);
-            var activePlayers = Players.Count(player => player.Chips > 0);
-            if (activePlayers == 2)
-            {
-                SmallBlindIndex = DealerIndex;
-                BigBlindIndex = FindNextIndex(DealerIndex, player => player.Chips > 0);
-            }
-            else
-            {
-                SmallBlindIndex = FindNextIndex(DealerIndex, player => player.Chips > 0);
-                BigBlindIndex = FindNextIndex(SmallBlindIndex, player => player.Chips > 0);
-            }
-
-            DealHoleCards(deck);
-            PostBlind(Players[SmallBlindIndex], SmallBlind);
-            var bigBlindAmount = PostBlind(Players[BigBlindIndex], BigBlind);
-            CurrentBet = bigBlindAmount;
-            MinRaise = BigBlind;
-
-            Phase = GamePhase.PreFlop;
-            CurrentTurnIndex = NormalizeTurnIndex(FindNextIndex(BigBlindIndex, player => player.CanAct));
-            if (CurrentTurnIndex is null)
-            {
-                DealRemainingBoard();
-                ResolveShowdown(Players.Where(p => p.IsInHand).ToList());
-            }
-
-            return GameStartStatus.Started;
-        }
+        ResetTableForNextHand();
+        LastResult = null;
     }
 
-    public GameActionResult ApplyAction(Guid userId, PlayerAction action, int amount)
+    internal void ResetTableForNextHand()
     {
-        lock (_lock)
+        Phase = GamePhase.WaitingForPlayers;
+        Pot = 0;
+        CurrentBet = 0;
+        MinRaise = BigBlind;
+        Board.Clear();
+        CurrentTurnIndex = null;
+        _deck = null;
+        SmallBlindIndex = -1;
+        BigBlindIndex = -1;
+
+        foreach (var player in Players)
         {
-            if (Phase is GamePhase.WaitingForPlayers or GamePhase.Showdown)
-            {
-                return new GameActionResult(false, "The hand is not active.");
-            }
-
-            var playerIndex = Players.FindIndex(p => p.UserId == userId);
-            if (playerIndex < 0)
-            {
-                return new GameActionResult(false, "Player not found.");
-            }
-
-            if (CurrentTurnIndex != playerIndex)
-            {
-                return new GameActionResult(false, "It is not your turn.");
-            }
-
-            var player = Players[playerIndex];
-            if (!player.CanAct)
-            {
-                return new GameActionResult(false, "Player cannot act.");
-            }
-
-            switch (action)
-            {
-                case PlayerAction.Fold:
-                    player.HasFolded = true;
-                    player.HasActedThisRound = true;
-                    break;
-                case PlayerAction.Check:
-                    if (player.CurrentBet != CurrentBet)
-                    {
-                        return new GameActionResult(false, "Cannot check when there is a bet to call.");
-                    }
-
-                    player.HasActedThisRound = true;
-                    break;
-                case PlayerAction.Call:
-                    var toCall = CurrentBet - player.CurrentBet;
-                    if (toCall <= 0)
-                    {
-                        player.HasActedThisRound = true;
-                        break;
-                    }
-
-                    var called = player.Bet(toCall);
-                    Pot += called;
-                    player.HasActedThisRound = true;
-                    break;
-                case PlayerAction.Raise:
-                    if (amount <= 0)
-                    {
-                        return new GameActionResult(false, "Raise amount must be positive.");
-                    }
-
-                    if (amount < MinRaise)
-                    {
-                        return new GameActionResult(false, $"Minimum raise is {MinRaise}.");
-                    }
-
-                    var targetBet = CurrentBet + amount;
-                    var needed = targetBet - player.CurrentBet;
-                    if (needed <= 0)
-                    {
-                        return new GameActionResult(false, "Raise amount is too small.");
-                    }
-
-                    if (needed > player.Chips)
-                    {
-                        return new GameActionResult(false, "Not enough chips to raise.");
-                    }
-
-                    var raised = player.Bet(needed);
-                    Pot += raised;
-                    CurrentBet = player.CurrentBet;
-                    MinRaise = amount;
-                    player.HasActedThisRound = true;
-                    foreach (var other in Players)
-                    {
-                        if (other.UserId != player.UserId && other.CanAct)
-                        {
-                            other.HasActedThisRound = false;
-                        }
-                    }
-
-                    break;
-                default:
-                    return new GameActionResult(false, "Unknown action.");
-            }
-
-            if (TryFinishHand())
-            {
-                return new GameActionResult(true, null);
-            }
-
-            if (TryAdvanceRound())
-            {
-                return new GameActionResult(true, null);
-            }
-
-            CurrentTurnIndex = NormalizeTurnIndex(FindNextIndex(playerIndex, p => p.CanAct));
-            return new GameActionResult(true, null);
+            player.ResetForHand();
         }
     }
 
-    private void DealHoleCards(Deck deck)
+public GameStartStatus StartHand() 
+    => WithLock(() => _rules.StartHand(this));
+
+  public GameActionResult ApplyAction(Guid userId, PlayerAction action, int amount) 
+    => WithLock(() => _rules.ApplyAction(this, userId, action, amount));
+
+    internal void DealHoleCards(Deck deck, int cardsPerPlayer)
     {
         var dealOrder = new List<GamePlayer>();
         var startIndex = SmallBlindIndex >= 0 ? SmallBlindIndex : 0;
@@ -370,7 +236,7 @@ public sealed class GameSession
             index = (index + 1) % Players.Count;
         }
 
-        for (var round = 0; round < 2; round++)
+        for (var round = 0; round < cardsPerPlayer; round++)
         {
             foreach (var player in dealOrder)
             {
@@ -379,14 +245,14 @@ public sealed class GameSession
         }
     }
 
-    private int PostBlind(GamePlayer player, int blind)
+    internal int PostBlind(GamePlayer player, int blind)
     {
         var posted = player.Bet(blind);
         Pot += posted;
         return posted;
     }
 
-    private bool TryFinishHand()
+    internal bool TryFinishHand()
     {
         var activePlayers = Players.Where(p => p.IsInHand).ToList();
         if (activePlayers.Count == 1)
@@ -397,16 +263,18 @@ public sealed class GameSession
             {
                 new(winner.UserId, winner.Username, Pot)
             });
-            Pot = 0;
-            Phase = GamePhase.Showdown;
-            CurrentTurnIndex = null;
+            ResetTableForNextHand();
             return true;
         }
 
         var bettingPlayers = Players.Where(p => p.CanAct).ToList();
         if (bettingPlayers.Count == 0 && activePlayers.Count > 1)
         {
-            DealRemainingBoard();
+            if (Phase is GamePhase.PreFlop or GamePhase.Flop or GamePhase.Turn or GamePhase.River)
+            {
+                DealRemainingBoard();
+            }
+
             ResolveShowdown(activePlayers);
             return true;
         }
@@ -414,7 +282,7 @@ public sealed class GameSession
         return false;
     }
 
-    private bool TryAdvanceRound()
+    internal bool TryAdvanceRound()
     {
         if (!IsBettingRoundComplete())
         {
@@ -447,13 +315,22 @@ public sealed class GameSession
             case GamePhase.River:
                 ResolveShowdown(Players.Where(p => p.IsInHand).ToList());
                 return true;
+            case GamePhase.InitialDeal:
+                Phase = GamePhase.DrawCards;
+                break;
+            case GamePhase.DrawCards:
+                Phase = GamePhase.SecondBetting;
+                break;
+            case GamePhase.SecondBetting:
+                ResolveShowdown(Players.Where(p => p.IsInHand).ToList());
+                return true;
         }
 
         CurrentTurnIndex = NormalizeTurnIndex(FindNextIndex(DealerIndex, player => player.CanAct));
         return true;
     }
 
-    private void DealBoardCards(int count)
+    internal void DealBoardCards(int count)
     {
         if (_deck is null)
         {
@@ -466,7 +343,7 @@ public sealed class GameSession
         }
     }
 
-    private void DealRemainingBoard()
+    internal void DealRemainingBoard()
     {
         if (_deck is null)
         {
@@ -479,7 +356,7 @@ public sealed class GameSession
         }
     }
 
-    private void ResolveShowdown(List<GamePlayer> activePlayers)
+    internal void ResolveShowdown(List<GamePlayer> activePlayers)
     {
         var bestScore = int.MinValue;
         var winners = new List<GamePlayer>();
@@ -513,9 +390,7 @@ public sealed class GameSession
             : "";
 
         LastResult = new GameResult(Pot, description, winnerList);
-        Pot = 0;
-        Phase = GamePhase.Showdown;
-        CurrentTurnIndex = null;
+        ResetTableForNextHand();
     }
 
     private bool IsBettingRoundComplete()
@@ -529,7 +404,7 @@ public sealed class GameSession
         return bettingPlayers.All(player => player.HasActedThisRound && player.CurrentBet == CurrentBet);
     }
 
-    private int FindNextIndex(int startIndex, Func<GamePlayer, bool> predicate)
+    internal int FindNextIndex(int startIndex, Func<GamePlayer, bool> predicate)
     {
         if (Players.Count == 0)
         {
@@ -549,7 +424,7 @@ public sealed class GameSession
         return -1;
     }
 
-    private int? NormalizeTurnIndex(int index)
+    internal int? NormalizeTurnIndex(int index)
         => index >= 0 ? index : null;
 }
 

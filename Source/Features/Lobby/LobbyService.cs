@@ -21,9 +21,9 @@ namespace Source.Features.Lobby
         Failed
     }
 
-    public class LobbyService(AppDbContext db)
+    // 1. 🚨 INJECT THE NOTIFIER HERE
+    public class LobbyService(AppDbContext db, LobbyUpdateNotifier notifier)
     {
-
         public async Task<Domain.Entities.Lobby?> GetLobbyByIdAsync(Guid lobbyId, bool includePlayers = false)
         {
             var query = db.Lobbies.AsNoTracking();
@@ -34,7 +34,6 @@ namespace Source.Features.Lobby
 
             return await query.FirstOrDefaultAsync(lobby => lobby.Id == lobbyId);
         }
-
 
         public async Task<List<Domain.Entities.Lobby>> GetAllLobbiesAsync(bool includePlayers = false)
         {
@@ -48,7 +47,6 @@ namespace Source.Features.Lobby
 
             return lobbies;
         }
-
 
         public async Task<LobbyJoinResult> JoinLobbyAsync(Guid lobbyId, Guid userId)
         {
@@ -79,6 +77,9 @@ namespace Source.Features.Lobby
                 await db.SaveChangesAsync();
                 await transaction.CommitAsync();
 
+                // 2. 🚨 TRIGGER UPDATE
+                notifier.Notify();
+
                 return LobbyJoinResult.Success;
             }
             catch (Exception)
@@ -87,7 +88,6 @@ namespace Source.Features.Lobby
                 return LobbyJoinResult.Failed;
             }
         }
-
 
         public async Task<LobbyLeaveResult> LeaveLobbyAsync(Guid lobbyId, Guid userId)
         {
@@ -111,6 +111,9 @@ namespace Source.Features.Lobby
                 await db.SaveChangesAsync();
                 await transaction.CommitAsync();
 
+                // 3. 🚨 TRIGGER UPDATE
+                notifier.Notify();
+
                 return LobbyLeaveResult.Success;
             }
             catch (Exception)
@@ -119,7 +122,6 @@ namespace Source.Features.Lobby
                 return LobbyLeaveResult.Failed;
             }
         }
-
 
         public async Task<Domain.Entities.Lobby?> CreateLobbyAsync(LobbyCreateRequest dto, Guid ownerUserId)
         {
@@ -136,19 +138,23 @@ namespace Source.Features.Lobby
 
             try
             {
-                var lobby = new Domain.Entities.Lobby
+                  var lobby = new Domain.Entities.Lobby
                 {
                     Id = Guid.NewGuid(),
                     Name = dto.Name,
                     OwnerUserId = ownerUserId,
                     MaxPlayers = dto.MaxPlayers,
                     SmallBlind = dto.SmallBlind,
-                    BigBlind = dto.BigBlind
+                    BigBlind = dto.BigBlind,
+                    GameType = dto.GameType // <-- FIXED: Was entirely missing
                 };
 
                 await db.Lobbies.AddAsync(lobby);
                 await db.SaveChangesAsync();
                 await transaction.CommitAsync();
+
+                // 4. 🚨 TRIGGER UPDATE
+                notifier.Notify();
 
                 return lobby;
             }
@@ -158,7 +164,6 @@ namespace Source.Features.Lobby
                 return null;
             }
         }
-
 
         public async Task<Domain.Entities.Lobby?> UpdateLobbyAsync(Guid lobbyId, LobbyUpdateRequest dto)
         {
@@ -182,11 +187,14 @@ namespace Source.Features.Lobby
                 lobby.MaxPlayers = dto.MaxPlayers;
                 lobby.SmallBlind = dto.SmallBlind;
                 lobby.BigBlind = dto.BigBlind;
+                lobby.GameType = dto.GameType; // <-- FIXED: Was entirely missing
                 
-
                 db.Lobbies.Update(lobby);
                 await db.SaveChangesAsync();
                 await transaction.CommitAsync();
+
+                // 5. 🚨 TRIGGER UPDATE
+                notifier.Notify();
 
                 return lobby;
             }
@@ -196,7 +204,6 @@ namespace Source.Features.Lobby
                 return null;
             }
         }
-
 
         public async Task<bool> DeleteLobbyAsync(Guid lobbyId)
         {
@@ -221,6 +228,9 @@ namespace Source.Features.Lobby
                 db.Lobbies.Remove(lobby);
                 await db.SaveChangesAsync();
                 await transaction.CommitAsync();
+
+                // 6. 🚨 TRIGGER UPDATE
+                notifier.Notify();
 
                 return true;
             }
