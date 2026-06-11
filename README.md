@@ -1,183 +1,226 @@
-# Poker Arena (Web Project)
+# Poker Arena
 
-Proiect tip microservices pentru un joc de poker, cu backend-uri în **ASP.NET Core (.NET / C#)** și UI/frontend de test.
+Poker Arena is a demo poker platform built with a microservices-style architecture.  
+The project includes user management, lobby management, and real-time gameplay using SignalR.  
+It supports two poker variants: **Texas Hold'em** and **Five Card Draw**.
 
-Repository-ul conține mai multe servicii (ex: `GameService`, `LobbyService`, `UserService`) + pagini UI/demo (HTML/CSS/JS).
+## Project Overview
 
----
+Poker Arena is split into multiple services and layers:
 
-## Tech stack
+- **UserService** — authentication, user profile management, and user-related persistence.
+- **LobbyService** — lobby creation, lobby listing, and player management inside lobbies.
+- **GameService** — real-time poker gameplay, game phases, state machines, and hand evaluation.
+- **Messaging** — RabbitMQ-based event communication between services.
+- **Frontend/Demo UI** — simple pages for login, lobby browsing, profile viewing, and gameplay flow.
 
-- **.NET (ASP.NET Core Minimal API / Web)** (`net10.0`)
-- **SignalR** (real-time) – în `GameService` (`/gamehub`)
-- **JWT Bearer Authentication** – în `GameService` (hub-ul este `[Authorize]`)
-- **EF Core + SQLite** – în `UserService` (migrations la startup)
-- **RabbitMQ** – messaging/event-driven (ex: eveniment `auth.user_registered`)
-- **OpenAPI + Scalar** – documentație API în Development
+## Features
 
----
+### User management
+- Sign up and login.
+- JWT-based authentication.
+- Get user profile by id.
+- Update username.
+- Delete user profile.
+- Create user automatically from `auth.user_registered` event.
 
-## Repository structure (high-level)
+### Lobby management
+- Create lobby.
+- Delete lobby.
+- Add and remove players from lobby.
+- Persist lobby and player data with Entity Framework Core.
 
-- `GameService/`  
-  Backend real-time pentru joc (SignalR), autentificare JWT, OpenAPI/Scalar, logică de joc (Texas Hold’em + Five Card Draw).
+### Real-time gameplay
+- SignalR hub for live game communication.
+- Authenticated access to `/gamehub`.
+- Real-time state updates for players.
+- Game actions like bet and discard cards.
+- Support for:
+  - Texas Hold'em
+  - Five Card Draw
 
-- `LobbyService/`  
-  Gestionare lobby-uri (create/delete). Unele metode sunt încă neimplementate (`NotImplementedException`).
+### Game logic
+- Deck generation and shuffle.
+- Card, suit, rank, and game phase models.
+- State machine for Texas Hold’em:
+  - PreFlop
+  - Flop
+  - Turn
+  - River
+  - Showdown
+- State machine for Five Card Draw:
+  - InitialDeal
+  - DrawCards
+  - SecondBetting
+  - Showdown
+- Hand evaluation using an external evaluator library.
 
-- `UserService/`  
-  Minimal API pentru useri (SQLite + EF Core), plus consumer RabbitMQ pentru evenimentul de înregistrare.
+## Architecture
 
-- `Frontend/` / `Utils/`  
-  UI demo (pagini HTML/CSS/JS + scripturi de test).
+The project is structured around clear separation of responsibilities:
 
-- `web-project.sln`  
-  Soluția .NET.
+- **Domain / State** — core poker models like `Player`, `Table`, `Card`, `Deck`, `GamePhase`.
+- **Core / GameLogic** — game state machines and hand evaluation.
+- **Features** — API endpoints and service logic.
+- **Infrastructure** — repositories, persistence, and messaging.
+- **Hubs** — SignalR hub for live gameplay.
+- **DTOs** — safe data transfer objects sent to clients.
 
----
+## Tech Stack
 
-## Requirements
+- .NET 10
+- ASP.NET Core Minimal APIs
+- SignalR
+- RabbitMQ
+- Entity Framework Core
+- SQLite
+- FluentValidation
+- JWT Bearer Authentication
 
-- **.NET 10 SDK** (proiectele folosesc `net10.0`)
-- (Opțional) **Node.js + npm** dacă rulezi partea de `Frontend/`
-- (Opțional) **RabbitMQ** dacă vrei flow complet cu events între servicii
+## Services
 
-Verificare:
+### UserService
+Handles authentication and user profile operations.
+
+Main endpoints:
+- `POST /api/auth/sign-up`
+- `POST /api/auth/login`
+- `GET /api/users/{id}`
+- `PUT /api/users/{id}`
+- `DELETE /api/users/{id}`
+
+### LobbyService
+Handles lobby lifecycle and player management.
+
+Main responsibilities:
+- create lobby
+- delete lobby
+- add player
+- remove player
+- store data in database
+
+### GameService
+Handles the real-time poker game.
+
+Main responsibilities:
+- manage game rooms
+- handle player actions
+- advance game phases
+- compute winners at showdown
+- broadcast state updates through SignalR
+
+## Authentication
+
+The project uses JWT authentication.  
+After successful login, the client receives a JWT token and uses it to access protected endpoints and the SignalR hub.
+
+For SignalR, the token can be passed through the `access_token` query string when connecting to `/gamehub`.
+
+## Messaging
+
+Poker Arena uses RabbitMQ for asynchronous communication between services.
+
+Example event:
+- `auth.user_registered`
+
+This event is used to create a user automatically in `UserService`.
+
+## How the gameplay works
+
+### Texas Hold'em
+1. Players receive 2 hole cards.
+2. Betting happens.
+3. Community cards are revealed:
+   - Flop
+   - Turn
+   - River
+4. Showdown decides the winner.
+
+### Five Card Draw
+1. Players receive 5 cards.
+2. First betting round.
+3. Players discard selected cards.
+4. Second betting round.
+5. Showdown decides the winner.
+
+## Running the project locally
+
+### Prerequisites
+- .NET 10 SDK
+- SQLite
+- RabbitMQ running locally if you want to test messaging
+- A JWT configuration for `GameService`
+
+### Run UserService
 ```bash
-dotnet --version
-dotnet --list-sdks
-```
-
----
-
-## Run services (local)
-
-> Rulează fiecare serviciu din folderul lui (unde există `.csproj`).
-
-### 1) GameService
-```bash
-cd GameService
-dotnet restore
 dotnet watch run
 ```
 
-#### Ce face
-- Expune un **SignalR Hub** la:
-  - `/gamehub`
-- Expune un root endpoint:
-  - `GET /` → `Poker GameService Backend is running and ready for connections!`
-- Are CORS permisiv (pentru testare locală).
-- În Development mapează OpenAPI + Scalar:
-  - `app.MapOpenApi()`
-  - `app.MapScalarApiReference()`
+### Run GameService
+```bash
+dotnet watch run
+```
 
-#### JWT / Auth (important)
-`GameHub` este protejat cu `[Authorize]`. `GameService` folosește JWT config din `appsettings*.json`:
+### Optional: run RabbitMQ
+Use a local RabbitMQ instance if you want to test event-based user creation.
+
+## Configuration
+
+Make sure the following settings are available in your `appsettings*.json` files:
+
+- `DefaultConnection`
 - `Jwt:Issuer`
 - `Jwt:Audience`
 - `Jwt:Secret`
+- RabbitMQ host, port, username, password
 
-Pentru SignalR, token-ul poate fi trimis și ca query string:
-- `access_token=...` (pe `/gamehub`), conform `OnMessageReceived`.
+## Demo Pages
 
----
+The project includes simple UI pages for:
+- `home`
+- `login`
+- `lobbies`
+- `profile`
+- `game`
 
-### 2) UserService
-```bash
-cd UserService
-dotnet restore
-dotnet watch run
-```
+These pages are meant to demonstrate the application flow and the relationship between services.
 
-#### DB (SQLite + EF Core)
-`UserService` folosește SQLite:
-- `UseSqlite(config.GetConnectionString("DefaultConnection"))`
+## MVP Scope
 
-La startup rulează migrations automat:
-- `db.Database.Migrate();`
+### Included
+- user sign-up and login
+- JWT authentication
+- user profile management
+- lobby management
+- real-time game updates
+- Texas Hold’em and Five Card Draw logic
+- manual testing for demo
 
-#### API routes
-Base path: `/api/users`
+### Not included
+- password reset
+- email verification
+- refresh tokens
+- advanced anti-cheat
+- monetization
+- matchmaking system
+- full automated test suite
 
-- `GET /api/users/{id:guid}`  
-  Returnează user-ul după id (sau `404`).
+## Project Goals
 
-- `PUT /api/users/{id:guid}`  
-  Update user (ex: `username`), cu validare FluentValidation:
-  - dacă `username` este trimis, trebuie să aibă **min 3** și **max 14** caractere.
+The main goal of Poker Arena is to demonstrate:
+- modular backend design,
+- service separation,
+- real-time communication,
+- event-driven integration,
+- and poker game state management.
 
-- `DELETE /api/users/{id:guid}`  
-  Șterge user-ul (sau `404` dacă nu există).
+## Notes
 
-#### Messaging (RabbitMQ)
-`UserService` consumă evenimentul `UserRegisteredEvent` din RabbitMQ:
-
-- Exchange: `auth`
-- Routing key: `auth.user_registered`
-- Queue: `user-service.user-registered`
-
-La primirea evenimentului:
-- creează user în DB prin `IUserService.CreateUserAsync(userId, username)`.
-
----
-
-### 3) LobbyService
-`LobbyService` gestionează lobby-uri (create/delete) și conține modele:
-- `Lobby` (max 6 jucători, min 2)
-- `Player` (ready status etc.)
-
-Unele metode sunt încă neimplementate:
-- `AddPlayerToLobbyAsync`
-- `RemovePlayerFromLobbyAsync`
-
-Pornirea și endpoint-urile depind de setup-ul complet din proiect (fișierele de Program/Endpoints nu sunt incluse aici).
-
----
-
-## GameService - Game Logic (overview)
-
-### State
-- `Table`:
-  - `RoomId`, `Pot`, `Phase`, `BoardCards`, `Players`, `CurrentDeck`, `DealerIndex`, `GameType` etc.
-- `Player`:
-  - `Id`, `Name`, `Chips`, `CurrentBet`, `HasFolded`, `IsAllIn`, `HoleCards`
-  - `ResetForNewHand()` resetează starea pentru o nouă mână.
-
-### Deck & Cards
-- `Deck` generează un pachet standard 52 cărți și face shuffle.
-- `Card` este un record: `Card(Suit Suit, Rank Rank)`
-
-### Game types
-- `TexasHoldemStateMachine`
-  - Deal 2 cărți / player
-  - Phase flow: `PreFlop -> Flop -> Turn -> River -> Showdown`
-  - La showdown folosește `IHandEvaluator` pentru a determina câștigătorul și împarte pot-ul (inclusiv caz de egalitate).
-
-- `FiveCardDrawStateMachine`
-  - Deal 5 cărți / player
-  - Phase flow: `InitialDeal -> DrawCards -> SecondBetting -> Showdown`
-
-### Hand evaluation
-- `HandEvaluator` folosește `HoldemPoker.Evaluator` pentru:
-  - ranking score
-  - category
-  - description
-
----
-
-## UI / Demo pages
-
-Există pagini HTML/CSS demo pentru UI:
-- `home.html`, `login.html`, `lobbies.html`, `profile.html`, `game.html`
-- `styles.css` – stilizare
-- `app.js` – mock pentru lobby list + search
-
-### API test script
-Exemplu JS (`frontend.js`) care face request la:
-- `API_URL = "https://localhost:5000/api"`
-- `GET /players` (și loghează jucătorii în consola browser-ului)
-
-> Notă: endpoint-ul și portul trebuie să corespundă cu backend-ul pornit local.
+This project was built as a learning and demo application, with focus on:
+- clean separation of responsibilities,
+- practical software architecture,
+- and hands-on implementation of backend and game logic.
 
 ## License
-TBD
+
+For educational/demo use.
