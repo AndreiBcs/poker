@@ -4,6 +4,7 @@ using System.Net.Http;
 using System.Net.Http.Json;
 using System.Threading.Tasks;
 using Source.Features.Lobby;
+using Source.Domain.Enums;
 using Xunit;
 
 namespace Source.Api.Tests;
@@ -23,7 +24,7 @@ public class LobbyEndpointsTests : ApiTestBase
 
         var request = new HttpRequestMessage(HttpMethod.Post, "/lobbies")
         {
-            Content = JsonContent.Create(new LobbyCreateRequest("TestLobby", 6, 50, 100))
+            Content = JsonContent.Create(new LobbyCreateRequest("TestLobby", 6, 50, 100, GameType.TexasHoldem))
         };
         AddAuthHeaders(request, user);
 
