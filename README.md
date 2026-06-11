@@ -220,7 +220,3 @@ This project was built as a learning and demo application, with focus on:
 - clean separation of responsibilities,
 - practical software architecture,
 - and hands-on implementation of backend and game logic.
-
-## License
-
-For educational/demo use.
