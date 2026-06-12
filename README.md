@@ -18,7 +18,6 @@ Poker Arena is split into multiple services and layers:
 
 ### User management
 - Sign up and login.
-- JWT-based authentication.
 - Get user profile by id.
 - Update username.
 - Delete user profile.
@@ -110,9 +109,12 @@ Main responsibilities:
 - broadcast state updates through SignalR
 
 ## Authentication
+ Autentificarea prin Cookies 
+Cum funcționează: La login-ul cu succes în UserService, serverul emite un cookie securizat (HttpOnly, Secure, SameSite=Lax).
 
-The project uses JWT authentication.  
-After successful login, the client receives a JWT token and uses it to access protected endpoints and the SignalR hub.
+Partajarea între servicii: Pentru ca LobbyService și GameService să poată citi cookie-ul, serviciile folosesc ASP.NET Core Data Protection configurat cu o cheie partajată (stocată într-un folder comun sau Redis) și împart același domeniu (ex: api.poker.local sau prin Reverse Proxy ca YARP).
+
+SignalR & Cookies: Spre deosebire de JWT (care trebuia trimis în query string), browserul trimite automat cookie-ul de autentificare în timpul handshake-ului HTTP pentru /gamehub, făcând conexiunea mult mai securizată și curată.
 
 For SignalR, the token can be passed through the `access_token` query string when connecting to `/gamehub`.
 
@@ -149,7 +151,6 @@ This event is used to create a user automatically in `UserService`.
 - .NET 10 SDK
 - SQLite
 - RabbitMQ running locally if you want to test messaging
-- A JWT configuration for `GameService`
 
 ### Run UserService
 ```bash
@@ -184,8 +185,6 @@ The project includes simple UI pages for:
 - `game`
 
 These pages are meant to demonstrate the application flow and the relationship between services.
-
-## MVP Scope
 
 ### Included
 - user sign-up and login
