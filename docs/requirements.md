@@ -1,4 +1,4 @@
-# Poker Arena — Requirements (MVP)
+# Poker Arena — Requirements 
 
 ## 1. Obiectiv proiect
 
@@ -9,7 +9,7 @@ Scopul proiectului Poker Arena este realizarea unui demo de aplicație de poker 
 - joc în timp real folosind SignalR,
 - suport pentru două tipuri de joc: Texas Hold’em și Five Card Draw.
 
-## 2. Scope MVP
+## 2. Scope 
 
 ### In scope
 
@@ -43,7 +43,7 @@ Scopul proiectului Poker Arena este realizarea unui demo de aplicație de poker 
 - Administrare avansată a lobby-urilor, de exemplu ban/kick, invite links, lobby private/public complet.
 - Teste automate complete; pentru MVP se acceptă testare manuală.
 
-## 3. User Stories (MVP)
+## 3. User Stories 
 
 ### US-00A — Sign-up
 
