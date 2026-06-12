@@ -67,7 +67,9 @@ public sealed class TexasHoldemRules : IGameModeRules
         var playerIndex = session.Players.FindIndex(p => p.UserId == userId);
         if (playerIndex < 0)
         {
+            
             return new GameActionResult(false, "Player not found.");
+
         }
 
         if (session.CurrentTurnIndex != playerIndex)

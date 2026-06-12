@@ -12,6 +12,6 @@ public sealed class GameStateStore
     public bool TryGet(Guid lobbyId, out GameSession session)
         => _sessions.TryGetValue(lobbyId, out session!);
 
-    public void Remove(Guid lobbyId)
+    public void Remove(Guid lobbyId)    
         => _sessions.TryRemove(lobbyId, out _);
 }

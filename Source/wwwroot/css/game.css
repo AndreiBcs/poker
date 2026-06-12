@@ -27,7 +27,7 @@
   padding: clamp(12px, 1.6vw, 24px);
   box-sizing: border-box;
   display: grid;
-  grid-template-columns: minmax(220px, 300px) minmax(0, 1fr);
+  grid-template-columns: minmax(220px, auto) minmax(0, 1fr);
   gap: clamp(16px, 2vw, 32px);
   align-items: stretch;
 }
@@ -46,7 +46,8 @@
   left: auto;
   transform: none;
   z-index: 25;
-  width: min(100%, 330px);
+  width: auto;
+  max-width: 100%;
   padding-bottom: clamp(8px, 1.5vh, 18px);
 }
 
@@ -55,6 +56,7 @@
   gap: 16px;
   justify-content: flex-start;
   align-items: center;
+  flex-wrap: nowrap;
 }
 /* Header Section */
 .game-header {
@@ -78,6 +80,7 @@
   display: flex;
   gap: 15px;
   font-size: 0.85rem;
+  align-items: center;
 }
 
 .info-item {
@@ -117,12 +120,9 @@
 
 /* Top Right Controls */
 .top-right-controls {
-  position: absolute;
-  top: 10px;
-  right: 16px;
-  z-index: 20;
   display: flex;
   gap: 12px;
+  align-items: center;
 }
 
 @keyframes slideIn {
@@ -321,6 +321,7 @@
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
   cursor: default;
   overflow: hidden;
+  flex-shrink: 0;
 }
 
 .card.red {
