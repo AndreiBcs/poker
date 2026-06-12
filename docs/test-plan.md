@@ -1,4 +1,4 @@
-# Poker Arena — Test Plan (Manual, MVP)
+# Poker Arena — Test Plan (Manual)
 
 ## 1. Scope
 Acest plan acoperă testare manuală pentru:
@@ -59,9 +59,6 @@ Acest plan acoperă testare manuală pentru:
 1. Trimite `POST /api/auth/login` cu credentiale corecte.
 2. Observă răspunsul.
 
-**Expected Result:**
-- `200 OK`
-- răspunsul conține token JWT.
 
 ### TC-AUTH-05 — Login failed => 401 Unauthorized
 **Steps:**
@@ -145,7 +142,7 @@ Acest plan acoperă testare manuală pentru:
 
 ### TC-10 — SignalR connect without token
 **Steps:**
-1. Încearcă conectarea la `/gamehub` fără JWT.
+1. Încearcă conectarea la `/gamehub`
 
 **Expected Result:**
 - conexiune refuzată cu `401 Unauthorized`
