@@ -1,4 +1,4 @@
-# Poker Arena — Acceptance Criteria (MVP)
+# Poker Arena — Acceptance Criteria 
 
 ## 1. UserService — API `/api/users`
 
