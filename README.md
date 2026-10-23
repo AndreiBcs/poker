@@ -1,221 +1,71 @@
 # Poker Arena
 
-Poker Arena is a demo poker platform built with a microservices-style architecture.  
-The project includes user management, lobby management, and real-time gameplay using SignalR.  
-It supports two poker variants: **Texas Hold'em** and **Five Card Draw**.
+A small, anonymous Texas Hold’em app, refactored from the `Production` branch. Choose a nickname, create or join a password-protected lobby, and play with 2–10 people. No accounts, authentication, database, or message broker are required.
 
-## Project Overview
+## Projects
 
-Poker Arena is split into multiple services and layers:
+- `Core/`: .NET class library containing cards, deck, hand evaluation, betting, blinds, turn order, side pots and hand settlement. It has no ASP.NET or persistence dependencies.
+- `Api/`: ASP.NET Core HTTP API and WebSocket snapshots. Owns in-memory nicknames, lobbies, password checks, host controls, connections and private state projections.
+- `Frontend/`: Vite + React + TypeScript. Minimal forms, waiting room, poker table, action dialogs and notices.
+- `Core.Tests/`, `Api.Tests/`: engine regression tests and HTTP/WebSocket integration tests.
+- `Frontend/e2e/`: a two-browser-context test of the actual UI.
 
-- **UserService** — authentication, user profile management, and user-related persistence.
-- **LobbyService** — lobby creation, lobby listing, and player management inside lobbies.
-- **GameService** — real-time poker gameplay, game phases, state machines, and hand evaluation.
-- **Messaging** — RabbitMQ-based event communication between services.
-- **Frontend/Demo UI** — simple pages for login, lobby browsing, profile viewing, and gameplay flow.
+The former `Source` Razor app, cookie authentication, account services, SQLite migrations and Five Card Draw have been removed. Texas Hold’em is the only game mode.
 
-## Features
+## Run locally
 
-### User management
-- Sign up and login.
-- Get user profile by id.
-- Update username.
-- Delete user profile.
-- Create user automatically from `auth.user_registered` event.
+Requirements: .NET 10 SDK and Node.js 22.12+ (Node 24 recommended).
 
-### Lobby management
-- Create lobby.
-- Delete lobby.
-- Add and remove players from lobby.
-- Persist lobby and player data with Entity Framework Core.
-
-### Real-time gameplay
-- SignalR hub for live game communication.
-- Authenticated access to `/gamehub`.
-- Real-time state updates for players.
-- Game actions like bet and discard cards.
-- Support for:
-  - Texas Hold'em
-  - Five Card Draw
-
-### Game logic
-- Deck generation and shuffle.
-- Card, suit, rank, and game phase models.
-- State machine for Texas Hold’em:
-  - PreFlop
-  - Flop
-  - Turn
-  - River
-  - Showdown
-- State machine for Five Card Draw:
-  - InitialDeal
-  - DrawCards
-  - SecondBetting
-  - Showdown
-- Hand evaluation using an external evaluator library.
-
-## Architecture
-
-The project is structured around clear separation of responsibilities:
-
-- **Domain / State** — core poker models like `Player`, `Table`, `Card`, `Deck`, `GamePhase`.
-- **Core / GameLogic** — game state machines and hand evaluation.
-- **Features** — API endpoints and service logic.
-- **Infrastructure** — repositories, persistence, and messaging.
-- **Hubs** — SignalR hub for live gameplay.
-- **DTOs** — safe data transfer objects sent to clients.
-
-## Tech Stack
-
-- .NET 10
-- ASP.NET Core Minimal APIs
-- SignalR
-- RabbitMQ
-- Entity Framework Core
-- SQLite
-- FluentValidation
-- JWT Bearer Authentication
-
-## Services
-
-### UserService
-Handles authentication and user profile operations.
-
-Main endpoints:
-- `POST /api/auth/sign-up`
-- `POST /api/auth/login`
-- `GET /api/users/{id}`
-- `PUT /api/users/{id}`
-- `DELETE /api/users/{id}`
-
-### LobbyService
-Handles lobby lifecycle and player management.
-
-Main responsibilities:
-- create lobby
-- delete lobby
-- add player
-- remove player
-- store data in database
-
-### GameService
-Handles the real-time poker game.
-
-Main responsibilities:
-- manage game rooms
-- handle player actions
-- advance game phases
-- compute winners at showdown
-- broadcast state updates through SignalR
-
-## Authentication
- Autentificarea prin Cookies 
-Cum funcționează: La login-ul cu succes în UserService, serverul emite un cookie securizat (HttpOnly, Secure, SameSite=Lax).
-
-Partajarea între servicii: Pentru ca LobbyService și GameService să poată citi cookie-ul, serviciile folosesc ASP.NET Core Data Protection configurat cu o cheie partajată (stocată într-un folder comun sau Redis) și împart același domeniu (ex: api.poker.local sau prin Reverse Proxy ca YARP).
-
-SignalR & Cookies: Spre deosebire de JWT (care trebuia trimis în query string), browserul trimite automat cookie-ul de autentificare în timpul handshake-ului HTTP pentru /gamehub, făcând conexiunea mult mai securizată și curată.
-
-For SignalR, the token can be passed through the `access_token` query string when connecting to `/gamehub`.
-
-## Messaging
-
-Poker Arena uses RabbitMQ for asynchronous communication between services.
-
-Example event:
-- `auth.user_registered`
-
-This event is used to create a user automatically in `UserService`.
-
-## How the gameplay works
-
-### Texas Hold'em
-1. Players receive 2 hole cards.
-2. Betting happens.
-3. Community cards are revealed:
-   - Flop
-   - Turn
-   - River
-4. Showdown decides the winner.
-
-### Five Card Draw
-1. Players receive 5 cards.
-2. First betting round.
-3. Players discard selected cards.
-4. Second betting round.
-5. Showdown decides the winner.
-
-## Running the project locally
-
-### Prerequisites
-- .NET 10 SDK
-- SQLite
-- RabbitMQ running locally if you want to test messaging
-
-### Run UserService
-```bash
-dotnet watch run
+```sh
+dotnet restore PokerGame.slnx
+npm ci --prefix Frontend
 ```
 
-### Run GameService
-```bash
-dotnet watch run
+Run the API in one terminal:
+
+```sh
+dotnet run --project Api --no-launch-profile --urls http://127.0.0.1:5080
 ```
 
-### Optional: run RabbitMQ
-Use a local RabbitMQ instance if you want to test event-based user creation.
+Run the frontend in another:
 
-## Configuration
+```sh
+cd Frontend
+npm run dev
+```
 
-Make sure the following settings are available in your `appsettings*.json` files:
+Vite listens on port 5173 and proxies `/api` HTTP and WebSocket requests to port 5080. No CORS or authentication setup is needed. The API health endpoint is `GET /api/health`.
 
-- `DefaultConnection`
-- `Jwt:Issuer`
-- `Jwt:Audience`
-- `Jwt:Secret`
-- RabbitMQ host, port, username, password
+In the cloud machine the SDK is installed in `/workspace/.dotnet`. If `dotnet` is not on your shell path:
 
-## Demo Pages
+```sh
+export DOTNET_ROOT=/workspace/.dotnet
+export PATH="$DOTNET_ROOT:$PATH"
+export DOTNET_CLI_HOME=/workspace/.dotnet-home
+export NUGET_PACKAGES=/workspace/.nuget
+export npm_config_cache=/workspace/.npm
+```
 
-The project includes simple UI pages for:
-- `home`
-- `login`
-- `lobbies`
-- `profile`
-- `game`
+## Flow and rules
 
-These pages are meant to demonstrate the application flow and the relationship between services.
+1. Set a nickname (1–24 characters). The nickname is saved in local storage. A server-created player ID and current lobby ID are kept in session storage so a refresh reconnects to the same seat; separate browser sessions can play different seats.
+2. Browse open lobbies or create one with a name, password and capacity of 2–10. The creator immediately joins as host. Lobby passwords are salted and hashed in memory and never returned in API responses.
+3. Joining requires the correct password and an available seat. Waiting-room membership updates live. The host can kick guests or start with at least two players. Leaving transfers the host role to the next player; the last departure removes the lobby.
+4. Starting closes the lobby to new joins. Cards are dealt only after all members have a live WebSocket connection. A dropped connection pauses actions until reconnection; refreshing automatically reconnects. A player who cannot reconnect can explicitly leave. If someone leaves while the initial connection barrier is pending, a one-player lobby reopens.
+5. The server shuffles, deals private cards, posts blinds and enforces turns. Players can fold, check, call or raise. A raise amount is an increment above the current table bet, not the total contribution. Calling with insufficient chips goes all-in. Side pots are settled by contribution; ties split the pot, with odd chips awarded clockwise after the dealer.
+6. Each player sees only their own cards. The UI shows the board, chip counts, current bet, turn, dealer and blind badges, plus the latest action and hand result. The host deals the next hand; dealer/blinds rotate. Leaving during a game folds the hand and forfeits the remaining stack. If fewer than two players have chips, create a new lobby to play again.
 
-### Included
-- user sign-up and login
-- JWT authentication
-- user profile management
-- lobby management
-- real-time game updates
-- Texas Hold’em and Five Card Draw logic
-- manual testing for demo
+This is intentionally an in-memory casual-play prototype. Restarting the API clears players, lobbies and games. Player IDs identify seats; they are **not authentication** or proof of ownership. No persistent bankroll, account recovery, turn timers or production deployment infrastructure is included. Rendering uses initials as placeholder profile pictures and deliberately minimal CSS.
 
-### Not included
-- password reset
-- email verification
-- refresh tokens
-- advanced anti-cheat
-- monetization
-- matchmaking system
-- full automated test suite
+## Validation
 
-## Project Goals
+```sh
+dotnet test PokerGame.slnx
+npm run build --prefix Frontend
+cd Frontend
+npm run test:e2e
+```
 
-The main goal of Poker Arena is to demonstrate:
-- modular backend design,
-- service separation,
-- real-time communication,
-- event-driven integration,
-- and poker game state management.
+Playwright starts an isolated API on port 5080 and Vite on port 5180; stop development servers on those ports first. It uses `/usr/bin/chromium` if present, or `PLAYWRIGHT_CHROMIUM_EXECUTABLE` when set. Otherwise install its browser once with `npx playwright install chromium`.
 
-## Notes
-
-This project was built as a learning and demo application, with focus on:
-- clean separation of responsibilities,
-- practical software architecture,
-- and hands-on implementation of backend and game logic.
+See [the API contract](docs/api.md) and [test plan](docs/test-plan.md).
