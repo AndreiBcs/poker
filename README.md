@@ -1,183 +1,71 @@
-# Poker Arena (Web Project)
+# Poker Arena
 
-Proiect tip microservices pentru un joc de poker, cu backend-uri în **ASP.NET Core (.NET / C#)** și UI/frontend de test.
+A small, anonymous Texas Hold’em app, refactored from the `Production` branch. Choose a nickname, create or join a password-protected lobby, and play with 2–10 people. No accounts, authentication, database, or message broker are required.
 
-Repository-ul conține mai multe servicii (ex: `GameService`, `LobbyService`, `UserService`) + pagini UI/demo (HTML/CSS/JS).
+## Projects
 
----
+- `Core/`: .NET class library containing cards, deck, hand evaluation, betting, blinds, turn order, side pots and hand settlement. It has no ASP.NET or persistence dependencies.
+- `Api/`: ASP.NET Core HTTP API and WebSocket snapshots. Owns in-memory nicknames, lobbies, password checks, host controls, connections and private state projections.
+- `Frontend/`: Vite + React + TypeScript. Minimal forms, waiting room, poker table, action dialogs and notices.
+- `Core.Tests/`, `Api.Tests/`: engine regression tests and HTTP/WebSocket integration tests.
+- `Frontend/e2e/`: a two-browser-context test of the actual UI.
 
-## Tech stack
+The former `Source` Razor app, cookie authentication, account services, SQLite migrations and Five Card Draw have been removed. Texas Hold’em is the only game mode.
 
-- **.NET (ASP.NET Core Minimal API / Web)** (`net10.0`)
-- **SignalR** (real-time) – în `GameService` (`/gamehub`)
-- **JWT Bearer Authentication** – în `GameService` (hub-ul este `[Authorize]`)
-- **EF Core + SQLite** – în `UserService` (migrations la startup)
-- **RabbitMQ** – messaging/event-driven (ex: eveniment `auth.user_registered`)
-- **OpenAPI + Scalar** – documentație API în Development
+## Run locally
 
----
+Requirements: .NET 10 SDK and Node.js 22.12+ (Node 24 recommended).
 
-## Repository structure (high-level)
-
-- `GameService/`  
-  Backend real-time pentru joc (SignalR), autentificare JWT, OpenAPI/Scalar, logică de joc (Texas Hold’em + Five Card Draw).
-
-- `LobbyService/`  
-  Gestionare lobby-uri (create/delete). Unele metode sunt încă neimplementate (`NotImplementedException`).
-
-- `UserService/`  
-  Minimal API pentru useri (SQLite + EF Core), plus consumer RabbitMQ pentru evenimentul de înregistrare.
-
-- `Frontend/` / `Utils/`  
-  UI demo (pagini HTML/CSS/JS + scripturi de test).
-
-- `web-project.sln`  
-  Soluția .NET.
-
----
-
-## Requirements
-
-- **.NET 10 SDK** (proiectele folosesc `net10.0`)
-- (Opțional) **Node.js + npm** dacă rulezi partea de `Frontend/`
-- (Opțional) **RabbitMQ** dacă vrei flow complet cu events între servicii
-
-Verificare:
-```bash
-dotnet --version
-dotnet --list-sdks
+```sh
+dotnet restore PokerGame.slnx
+npm ci --prefix Frontend
 ```
 
----
+Run the API in one terminal:
 
-## Run services (local)
-
-> Rulează fiecare serviciu din folderul lui (unde există `.csproj`).
-
-### 1) GameService
-```bash
-cd GameService
-dotnet restore
-dotnet watch run
+```sh
+dotnet run --project Api --no-launch-profile --urls http://127.0.0.1:5080
 ```
 
-#### Ce face
-- Expune un **SignalR Hub** la:
-  - `/gamehub`
-- Expune un root endpoint:
-  - `GET /` → `Poker GameService Backend is running and ready for connections!`
-- Are CORS permisiv (pentru testare locală).
-- În Development mapează OpenAPI + Scalar:
-  - `app.MapOpenApi()`
-  - `app.MapScalarApiReference()`
+Run the frontend in another:
 
-#### JWT / Auth (important)
-`GameHub` este protejat cu `[Authorize]`. `GameService` folosește JWT config din `appsettings*.json`:
-- `Jwt:Issuer`
-- `Jwt:Audience`
-- `Jwt:Secret`
-
-Pentru SignalR, token-ul poate fi trimis și ca query string:
-- `access_token=...` (pe `/gamehub`), conform `OnMessageReceived`.
-
----
-
-### 2) UserService
-```bash
-cd UserService
-dotnet restore
-dotnet watch run
+```sh
+cd Frontend
+npm run dev
 ```
 
-#### DB (SQLite + EF Core)
-`UserService` folosește SQLite:
-- `UseSqlite(config.GetConnectionString("DefaultConnection"))`
+Vite listens on port 5173 and proxies `/api` HTTP and WebSocket requests to port 5080. No CORS or authentication setup is needed. The API health endpoint is `GET /api/health`.
 
-La startup rulează migrations automat:
-- `db.Database.Migrate();`
+In the cloud machine the SDK is installed in `/workspace/.dotnet`. If `dotnet` is not on your shell path:
 
-#### API routes
-Base path: `/api/users`
+```sh
+export DOTNET_ROOT=/workspace/.dotnet
+export PATH="$DOTNET_ROOT:$PATH"
+export DOTNET_CLI_HOME=/workspace/.dotnet-home
+export NUGET_PACKAGES=/workspace/.nuget
+export npm_config_cache=/workspace/.npm
+```
 
-- `GET /api/users/{id:guid}`  
-  Returnează user-ul după id (sau `404`).
+## Flow and rules
 
-- `PUT /api/users/{id:guid}`  
-  Update user (ex: `username`), cu validare FluentValidation:
-  - dacă `username` este trimis, trebuie să aibă **min 3** și **max 14** caractere.
+1. Set a nickname (1–24 characters). The nickname is saved in local storage. A server-created player ID and current lobby ID are kept in session storage so a refresh reconnects to the same seat; separate browser sessions can play different seats.
+2. Browse open lobbies or create one with a name, password and capacity of 2–10. The creator immediately joins as host. Lobby passwords are salted and hashed in memory and never returned in API responses.
+3. Joining requires the correct password and an available seat. Waiting-room membership updates live. The host can kick guests or start with at least two players. Leaving transfers the host role to the next player; the last departure removes the lobby.
+4. Starting closes the lobby to new joins. Cards are dealt only after all members have a live WebSocket connection. A dropped connection pauses actions until reconnection; refreshing automatically reconnects. A player who cannot reconnect can explicitly leave. If someone leaves while the initial connection barrier is pending, a one-player lobby reopens.
+5. The server shuffles, deals private cards, posts blinds and enforces turns. Players can fold, check, call or raise. A raise amount is an increment above the current table bet, not the total contribution. Calling with insufficient chips goes all-in. Side pots are settled by contribution; ties split the pot, with odd chips awarded clockwise after the dealer.
+6. Each player sees only their own cards. The UI shows the board, chip counts, current bet, turn, dealer and blind badges, plus the latest action and hand result. The host deals the next hand; dealer/blinds rotate. Leaving during a game folds the hand and forfeits the remaining stack. If fewer than two players have chips, create a new lobby to play again.
 
-- `DELETE /api/users/{id:guid}`  
-  Șterge user-ul (sau `404` dacă nu există).
+This is intentionally an in-memory casual-play prototype. Restarting the API clears players, lobbies and games. Player IDs identify seats; they are **not authentication** or proof of ownership. No persistent bankroll, account recovery, turn timers or production deployment infrastructure is included. Rendering uses initials as placeholder profile pictures and deliberately minimal CSS.
 
-#### Messaging (RabbitMQ)
-`UserService` consumă evenimentul `UserRegisteredEvent` din RabbitMQ:
+## Validation
 
-- Exchange: `auth`
-- Routing key: `auth.user_registered`
-- Queue: `user-service.user-registered`
+```sh
+dotnet test PokerGame.slnx
+npm run build --prefix Frontend
+cd Frontend
+npm run test:e2e
+```
 
-La primirea evenimentului:
-- creează user în DB prin `IUserService.CreateUserAsync(userId, username)`.
+Playwright starts an isolated API on port 5080 and Vite on port 5180; stop development servers on those ports first. It uses `/usr/bin/chromium` if present, or `PLAYWRIGHT_CHROMIUM_EXECUTABLE` when set. Otherwise install its browser once with `npx playwright install chromium`.
 
----
-
-### 3) LobbyService
-`LobbyService` gestionează lobby-uri (create/delete) și conține modele:
-- `Lobby` (max 6 jucători, min 2)
-- `Player` (ready status etc.)
-
-Unele metode sunt încă neimplementate:
-- `AddPlayerToLobbyAsync`
-- `RemovePlayerFromLobbyAsync`
-
-Pornirea și endpoint-urile depind de setup-ul complet din proiect (fișierele de Program/Endpoints nu sunt incluse aici).
-
----
-
-## GameService - Game Logic (overview)
-
-### State
-- `Table`:
-  - `RoomId`, `Pot`, `Phase`, `BoardCards`, `Players`, `CurrentDeck`, `DealerIndex`, `GameType` etc.
-- `Player`:
-  - `Id`, `Name`, `Chips`, `CurrentBet`, `HasFolded`, `IsAllIn`, `HoleCards`
-  - `ResetForNewHand()` resetează starea pentru o nouă mână.
-
-### Deck & Cards
-- `Deck` generează un pachet standard 52 cărți și face shuffle.
-- `Card` este un record: `Card(Suit Suit, Rank Rank)`
-
-### Game types
-- `TexasHoldemStateMachine`
-  - Deal 2 cărți / player
-  - Phase flow: `PreFlop -> Flop -> Turn -> River -> Showdown`
-  - La showdown folosește `IHandEvaluator` pentru a determina câștigătorul și împarte pot-ul (inclusiv caz de egalitate).
-
-- `FiveCardDrawStateMachine`
-  - Deal 5 cărți / player
-  - Phase flow: `InitialDeal -> DrawCards -> SecondBetting -> Showdown`
-
-### Hand evaluation
-- `HandEvaluator` folosește `HoldemPoker.Evaluator` pentru:
-  - ranking score
-  - category
-  - description
-
----
-
-## UI / Demo pages
-
-Există pagini HTML/CSS demo pentru UI:
-- `home.html`, `login.html`, `lobbies.html`, `profile.html`, `game.html`
-- `styles.css` – stilizare
-- `app.js` – mock pentru lobby list + search
-
-### API test script
-Exemplu JS (`frontend.js`) care face request la:
-- `API_URL = "https://localhost:5000/api"`
-- `GET /players` (și loghează jucătorii în consola browser-ului)
-
-> Notă: endpoint-ul și portul trebuie să corespundă cu backend-ul pornit local.
-
-## License
-TBD
+See [the API contract](docs/api.md) and [test plan](docs/test-plan.md).

@@ -1,0 +1,6 @@
+<Solution>
+  <Project Path="Core/Core.csproj" />
+  <Project Path="Api/Api.csproj" />
+  <Project Path="Core.Tests/Core.Tests.csproj" />
+  <Project Path="Api.Tests/Api.Tests.csproj" />
+</Solution>
