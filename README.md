@@ -1,51 +1,3 @@
-# Poker Arena
-
-A small, anonymous Texas Hold’em app, refactored from the `Production` branch. Choose a nickname, create or join a password-protected lobby, and play with 2–10 people. No accounts, authentication, database, or message broker are required.
-
-## Projects
-
-- `Core/`: .NET class library containing cards, deck, hand evaluation, betting, blinds, turn order, side pots and hand settlement. It has no ASP.NET or persistence dependencies.
-- `Api/`: ASP.NET Core HTTP API and WebSocket snapshots. Owns in-memory nicknames, lobbies, password checks, host controls, connections and private state projections.
-- `Frontend/`: Vite + React + TypeScript. Minimal forms, waiting room, poker table, action dialogs and notices.
-- `Core.Tests/`, `Api.Tests/`: engine regression tests and HTTP/WebSocket integration tests.
-- `Frontend/e2e/`: a two-browser-context test of the actual UI.
-
-The former `Source` Razor app, cookie authentication, account services, SQLite migrations and Five Card Draw have been removed. Texas Hold’em is the only game mode.
-
-## Run locally
-
-Requirements: .NET 10 SDK and Node.js 22.12+ (Node 24 recommended).
-
-```sh
-dotnet restore PokerGame.slnx
-npm ci --prefix Frontend
-```
-
-Run the API in one terminal:
-
-```sh
-dotnet run --project Api --no-launch-profile --urls http://127.0.0.1:5080
-```
-
-Run the frontend in another:
-
-```sh
-cd Frontend
-npm run dev
-```
-
-Vite listens on port 5173 and proxies `/api` HTTP and WebSocket requests to port 5080. No CORS or authentication setup is needed. The API health endpoint is `GET /api/health`.
-
-In the cloud machine the SDK is installed in `/workspace/.dotnet`. If `dotnet` is not on your shell path:
-
-```sh
-export DOTNET_ROOT=/workspace/.dotnet
-export PATH="$DOTNET_ROOT:$PATH"
-export DOTNET_CLI_HOME=/workspace/.dotnet-home
-export NUGET_PACKAGES=/workspace/.nuget
-export npm_config_cache=/workspace/.npm
-```
-
 ## Flow and rules
 
 1. Set a nickname (1–24 characters). The nickname is saved in local storage. A server-created player ID and current lobby ID are kept in session storage so a refresh reconnects to the same seat; separate browser sessions can play different seats.
@@ -65,7 +17,5 @@ npm run build --prefix Frontend
 cd Frontend
 npm run test:e2e
 ```
-
-Playwright starts an isolated API on port 5080 and Vite on port 5180; stop development servers on those ports first. It uses `/usr/bin/chromium` if present, or `PLAYWRIGHT_CHROMIUM_EXECUTABLE` when set. Otherwise install its browser once with `npx playwright install chromium`.
 
 See [the API contract](docs/api.md) and [test plan](docs/test-plan.md).
