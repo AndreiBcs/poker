@@ -1,10 +1,9 @@
-namespace PokerArena.Core.Domain.Enums
+namespace Core.Domain.Enums;
+
+public enum PlayerAction
 {
-    public enum PlayerAction
-    {
-        Check,
-        Call,
-        Raise,
-        Fold
-    }
+    Check,
+    Call,
+    Raise,
+    Fold
 }

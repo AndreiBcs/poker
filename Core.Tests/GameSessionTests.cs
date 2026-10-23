@@ -1,16 +1,23 @@
 using System;
 using System.Linq;
-using PokerArena.Core.Domain.Enums;
-using PokerArena.Core.Domain.ValueObjects;
-using PokerArena.Core.Game;
+using Core.Domain;
+using Core.Domain.Enums;
+using Core.Game;
 using Xunit;
 
-namespace PokerArena.Core.Tests;
+namespace Core.Tests;
 
 public class GameSessionTests
 {
-    private static GameSession Table(int count = 2) => new(Guid.NewGuid(), "Table", null, 25, 50,
-        Enumerable.Range(0, count).Select(n => (Guid.NewGuid(), $"Player {n}")).ToList(), 2000);
+    private static GameSession Table(int count = 2) => new(
+        Guid.NewGuid(), 
+        "Table", 
+        null, 
+        25, 
+        50,
+        Enumerable
+            .Range(0, count)
+            .Select(n => (Guid.NewGuid(), $"Player {n}")).ToList(), 2000);
 
     [Fact]
     public void StartDealsUniquePrivateCardsAndPostsHeadsUpBlinds()
@@ -49,7 +56,12 @@ public class GameSessionTests
         for (var action = 0; game.Phase != GamePhase.WaitingForPlayers && action < 100; action++)
         {
             var player = game.Players[game.CurrentTurnIndex!.Value];
-            Assert.True(game.ApplyAction(player.UserId, player.CurrentBet < game.CurrentBet ? PlayerAction.Call : PlayerAction.Check, 0).Success);
+            Assert.True(game
+                .ApplyAction(
+                    player.UserId, 
+                    player.CurrentBet < game.CurrentBet ? PlayerAction.Call : PlayerAction.Check, 
+                    0)
+                .Success);
         }
         Assert.Equal(GamePhase.WaitingForPlayers, game.Phase);
         Assert.NotNull(game.LastResult);

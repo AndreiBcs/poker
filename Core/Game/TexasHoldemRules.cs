@@ -1,7 +1,7 @@
-using PokerArena.Core.Domain.Enums;
-using PokerArena.Core.Domain.GameLogic;
+using Core.Domain;
+using Core.Domain.Enums;
 
-namespace PokerArena.Core.Game.Rules;
+namespace Core.Game;
 
 public sealed class TexasHoldemRules
 {
@@ -21,7 +21,7 @@ public sealed class TexasHoldemRules
         session.PrepareForNewHand();
 
         var deck = new Deck();
-        session._deck = deck;
+        session.Deck = deck;
         session.DealerIndex = session.FindNextIndex(session.DealerIndex, player => player.Chips > 0);
         var activePlayers = session.Players.Count(player => player.Chips > 0);
 

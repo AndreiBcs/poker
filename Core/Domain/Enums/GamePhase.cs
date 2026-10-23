@@ -1,3 +1,11 @@
-namespace PokerArena.Core.Domain.Enums;
+namespace Core.Domain.Enums;
 
-public enum GamePhase { WaitingForPlayers, PreFlop, Flop, Turn, River, Showdown }
+public enum GamePhase
+{
+    WaitingForPlayers,
+    PreFlop,
+    Flop,
+    Turn,
+    River,
+    Showdown
+}

@@ -1,16 +1,14 @@
-using PokerArena.Core.Domain.Enums;
-using PokerArena.Core.Domain.GameLogic;
-using PokerArena.Core.Domain.ValueObjects;
-using PokerArena.Core.Game.Rules;
+using Core.Domain;
+using Core.Domain.Enums;
 
-namespace PokerArena.Core.Game;
+namespace Core.Game;
 
 public sealed class GameSession
 {
     private readonly TexasHoldemRules _rules = new();
     private readonly object _lock = new();
     private readonly HandEvaluator _handEvaluator = new();
-    internal Deck? _deck;
+    internal Deck? Deck;
 
     public Guid LobbyId { get; }
     public string LobbyName { get; internal set; }
@@ -184,7 +182,7 @@ public sealed class GameSession
         MinRaise = BigBlind;
         Board.Clear();
         CurrentTurnIndex = null;
-        _deck = null;
+        Deck = null;
         SmallBlindIndex = -1;
         BigBlindIndex = -1;
 
@@ -305,27 +303,27 @@ public sealed class GameSession
 
     internal void DealBoardCards(int count)
     {
-        if (_deck is null)
+        if (Deck is null)
         {
             return;
         }
 
         for (var i = 0; i < count; i++)
         {
-            Board.Add(_deck.Draw());
+            Board.Add(Deck.Draw());
         }
     }
 
     internal void DealRemainingBoard()
     {
-        if (_deck is null)
+        if (Deck is null)
         {
             return;
         }
 
         while (Board.Count < 5)
         {
-            Board.Add(_deck.Draw());
+            Board.Add(Deck.Draw());
         }
     }
 

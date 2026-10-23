@@ -1,9 +1,9 @@
 using System;
 using System.Collections.Generic;
-using PokerArena.Core.Domain.GameLogic;
+using Core.Domain;
 using Xunit;
 
-namespace PokerArena.Core.Domain.Tests;
+namespace Core.Tests;
 
 public class DeckTests
 {
@@ -20,7 +20,7 @@ public class DeckTests
         }
 
         Assert.Equal(52, seen.Count);
-        Assert.Throws<InvalidOperationException>(() => deck.Draw());
+        Assert.Throws<InvalidOperationException>(deck.Draw);
     }
 
     [Fact]

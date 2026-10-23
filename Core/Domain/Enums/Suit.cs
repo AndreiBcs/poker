@@ -1,10 +1,9 @@
-namespace PokerArena.Core.Domain.Enums
+namespace Core.Domain.Enums;
+
+public enum Suit
 {
-    public enum Suit
-    {
-        Hearts,
-        Diamonds,
-        Clubs,
-        Spades
-    }
+    Hearts,
+    Diamonds,
+    Clubs,
+    Spades
 }

@@ -1,10 +1,9 @@
 using System.Collections.Generic;
-using PokerArena.Core.Domain.Enums;
-using PokerArena.Core.Domain.GameLogic;
-using PokerArena.Core.Domain.ValueObjects;
+using Core.Domain;
+using Core.Domain.Enums;
 using Xunit;
 
-namespace PokerArena.Core.Domain.Tests;
+namespace Core.Tests;
 
 public class HandEvaluatorTests
 {

@@ -1,19 +1,18 @@
-namespace PokerArena.Core.Domain.Enums
+namespace Core.Domain.Enums;
+
+public enum Rank
 {
-    public enum Rank
-    {
-        Two = 2,
-        Three,
-        Four,
-        Five,
-        Six,
-        Seven,
-        Eight,
-        Nine,
-        Ten,
-        Jack,
-        Queen,
-        King,
-        Ace
-    }
+    Two = 2,
+    Three,
+    Four,
+    Five,
+    Six,
+    Seven,
+    Eight,
+    Nine,
+    Ten,
+    Jack,
+    Queen,
+    King,
+    Ace
 }

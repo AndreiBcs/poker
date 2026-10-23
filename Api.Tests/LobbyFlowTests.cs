@@ -10,7 +10,7 @@ using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Xunit;
 
-namespace PokerArena.Api.Tests;
+namespace Api.Tests;
 
 public class LobbyFlowTests
 {

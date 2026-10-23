@@ -1,8 +1,9 @@
 using System.Security.Cryptography;
-using PokerArena.Core.Domain.Enums;
-using PokerArena.Core.Game;
+using Core.Domain;
+using Core.Domain.Enums;
+using Core.Game;
 
-namespace PokerArena.Api;
+namespace Api;
 
 public sealed class ArenaException(int status, string message) : Exception(message)
 {
@@ -16,11 +17,9 @@ public record CreateLobby(string Name, string Password, int MaxPlayers = 6,
 public record JoinLobby(string Password);
 public record ActionRequest(PlayerAction Action, int Amount = 0);
 
-// Owns application coordination and transport projections. The poker engine has no
-// knowledge of HTTP, sockets, cookies, databases, or player registration.
 public sealed class Arena
 {
-    private readonly object _gate = new();
+    private readonly Lock _gate = new();
     private readonly Dictionary<Guid, Player> _players = new();
     private readonly Dictionary<Guid, Room> _rooms = new();
 
@@ -233,7 +232,7 @@ public sealed class Arena
         room.Announce("All players connected. The game has begun.");
     }
 
-    private object Summary(Room room) => new
+    private static object Summary(Room room) => new
     {
         room.Id,
         room.Name,
@@ -245,8 +244,7 @@ public sealed class Arena
     private Room Member(Guid roomId, Guid playerId)
     {
         var room = Find(roomId);
-        if (!room.Players.Any(p => p.Id == playerId)) throw new ArenaException(403, "You are no longer in this lobby.");
-        return room;
+        return room.Players.All(p => p.Id != playerId) ? throw new ArenaException(403, "You are no longer in this lobby.") : room;
     }
     private void EnsureAvailable(Guid id)
     {
@@ -275,7 +273,7 @@ public sealed class Arena
         game.Pot,
         game.CurrentBet,
         game.MinRaise,
-        CurrentTurnUserId = game.CurrentTurnIndex is int turn ? game.Players[turn].UserId : (Guid?)null,
+        CurrentTurnUserId = game.CurrentTurnIndex is { } turn ? game.Players[turn].UserId : (Guid?)null,
         Board = game.Board.Select(Card).ToArray(),
         Players = game.Players.Where(p => members.Contains(p.UserId)).Select(p => new
         {
@@ -295,7 +293,7 @@ public sealed class Arena
         game.LastResult
     };
 
-    private static string Card(PokerArena.Core.Domain.ValueObjects.Card card)
+    private static string Card(Card card)
     {
         var rank = card.Rank switch { Rank.Ten => "10", Rank.Jack => "J", Rank.Queen => "Q", Rank.King => "K", Rank.Ace => "A", _ => ((int)card.Rank).ToString() };
         return rank + (card.Suit switch { Suit.Hearts => "♥", Suit.Diamonds => "♦", Suit.Clubs => "♣", _ => "♠" });

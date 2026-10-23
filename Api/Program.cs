@@ -1,7 +1,7 @@
 using System.Net.WebSockets;
 using System.Text.Json;
 using System.Text.Json.Serialization;
-using PokerArena.Api;
+using Api;
 
 var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddSingleton<Arena>();
@@ -88,4 +88,7 @@ static async Task ReceiveUntilClose(WebSocket socket, CancellationToken token)
         if (result.Count > 0) return;
     }
 }
-public partial class Program { }
+namespace Api
+{
+    public partial class Program { }
+}
