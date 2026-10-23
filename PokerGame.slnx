@@ -1,5 +1,6 @@
 <Solution>
-  <Project Path="Source/Source.csproj" />
-  <Project Path="Source.Domain.Tests/Source.Domain.Tests.csproj" />
-  <Project Path="Source.Api.Tests/Source.Api.Tests.csproj" />
+  <Project Path="Core/Core.csproj" />
+  <Project Path="Api/Api.csproj" />
+  <Project Path="Core.Tests/Core.Tests.csproj" />
+  <Project Path="Api.Tests/Api.Tests.csproj" />
 </Solution>
