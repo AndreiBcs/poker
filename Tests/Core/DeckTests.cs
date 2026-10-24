@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using Core.Domain;
 using Xunit;
 
-namespace Core.Tests;
+namespace Core.Tests.Core;
 
 public class DeckTests
 {

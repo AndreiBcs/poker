@@ -15,7 +15,7 @@ public sealed class GameSession
     public Guid? OwnerUserId { get; internal set; }
     public int SmallBlind { get; internal set; }
     public int BigBlind { get; internal set; }
-    public int Pot { get; internal set; }
+    public int Pot { get; set; }
     public int CurrentBet { get; internal set; }
     public int MinRaise { get; internal set; }
     public GamePhase Phase { get; internal set; } = GamePhase.WaitingForPlayers;
@@ -327,7 +327,7 @@ public sealed class GameSession
         }
     }
 
-    internal void ResolveShowdown(List<GamePlayer> activePlayers)
+    public void ResolveShowdown(List<GamePlayer> activePlayers)
     {
         // Ranking 1 is strongest. Each contribution level forms a separate pot;
         // folded chips stay in pots but folded players cannot win them.

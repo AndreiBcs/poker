@@ -8,16 +8,17 @@ using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc.Testing;
+using Microsoft.VisualStudio.TestPlatform.TestHost;
 using Xunit;
 
-namespace Api.Tests;
+namespace Core.Tests.Api;
 
 public class LobbyFlowTests
 {
     private static async Task<HttpClient> Player(WebApplicationFactory<Program> factory, string nickname)
     {
         var client = factory.CreateClient();
-        var response = await client.PostAsJsonAsync("/api/players", new { nickname });
+        var response = await HttpClientJsonExtensions.PostAsJsonAsync(client, "/api/players", new { nickname });
         response.EnsureSuccessStatusCode();
         var body = await response.Content.ReadFromJsonAsync<JsonElement>();
         client.DefaultRequestHeaders.Add("X-Player-Id", body.GetProperty("id").GetString());
@@ -59,7 +60,7 @@ public class LobbyFlowTests
     {
         using var factory = new WebApplicationFactory<Program>();
         using var client = factory.CreateClient();
-        Assert.Equal(HttpStatusCode.BadRequest, (await client.PostAsJsonAsync("/api/players", new { nickname = " " })).StatusCode);
+        Assert.Equal(HttpStatusCode.BadRequest, (await HttpClientJsonExtensions.PostAsJsonAsync(client, "/api/players", new { nickname = " " })).StatusCode);
         using var host = await Player(factory, "Host");
         foreach (var count in new[] { 1, 11 })
             Assert.Equal(HttpStatusCode.BadRequest, (await host.PostAsJsonAsync("/api/lobbies", new { name = "x", password = "p", maxPlayers = count })).StatusCode);

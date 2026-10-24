@@ -3,7 +3,7 @@ using Core.Domain;
 using Core.Domain.Enums;
 using Xunit;
 
-namespace Core.Tests;
+namespace Core.Tests.Core;
 
 public class HandEvaluatorTests
 {

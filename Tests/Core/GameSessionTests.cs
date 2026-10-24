@@ -5,7 +5,7 @@ using Core.Domain.Enums;
 using Core.Game;
 using Xunit;
 
-namespace Core.Tests;
+namespace Core.Tests.Core;
 
 public class GameSessionTests
 {
