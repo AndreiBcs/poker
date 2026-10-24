@@ -1,10 +1,10 @@
 # Texas Hold’em validation
 
-Run `dotnet test PokerGame.slnx`, `npm run build --prefix Frontend`, and `npm run test:e2e --prefix Frontend`.
+Run `dotnet test PokerGame.slnx`, `npm run build --prefix Frontend`, and `npm run test:integration --prefix Frontend`.
 
 Core tests cover card labels, evaluator rank conventions, 52 unique shuffled cards, deck reset, private dealing, heads-up blinds, turn validation, invalid raises, folds/payouts, ten-seat betting through showdown, side pots and chip conservation.
 
-API integration tests use a real ASP.NET test host and WebSocket clients. They cover nickname/capacity validation, auto-joined creator, password rejection, full lobbies, forbidden non-member access, host-only start/kick, host transfer, empty-room cleanup, concurrent joins, all-player connection barrier, private card projections, invalid turn/raise actions, folding, next hand, disconnect pause and reconnect.
+API integration tests use a real ASP.NET test host and SignalR clients. They cover nickname/capacity validation, auto-joined creator, password rejection, full lobbies, forbidden non-member access, host-only start/kick, host transfer, empty-room cleanup, concurrent joins, all-player connection barrier, private card projections, invalid turn/raise actions, folding, next hand, disconnect pause and reconnect.
 
 The Playwright test uses two independent browser contexts to set nicknames, create a ten-seat-capacity lobby, reject a wrong password, join, kick and rejoin, start, inspect private card backs, fold, deal again, refresh/reconnect and leave. It also checks browser errors and nickname persistence.
 
@@ -16,3 +16,5 @@ Manual checks for future UI work:
 - Close/reopen the app and confirm nickname persistence. Restart API and confirm stale-seat recovery when browsing/creating again.
 
 No account, authentication, RabbitMQ or SQLite scenarios apply to this version.
+
+API tests are marked `Category=Integration`; browser scenarios are tagged `@integration`. CI excludes both suites for now. The full local backend command still runs all API tests, and `npm run test:integration --prefix Frontend` runs the browser scenario.
