@@ -1,6 +1,6 @@
 import { expect, test } from '@playwright/test';
 
-test('nickname, password, host controls, live poker and refresh recovery', async ({ browser }) => {
+test('nickname, password, host controls, live poker and refresh recovery', { tag: '@integration' }, async ({ browser }) => {
   const hostContext = await browser.newContext();
   const guestContext = await browser.newContext();
   const host = await hostContext.newPage();
