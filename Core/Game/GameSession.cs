@@ -6,15 +6,15 @@ namespace Core.Game;
 public sealed class GameSession
 {
     private readonly TexasHoldemRules _rules = new();
-    private readonly object _lock = new();
+    private readonly Lock _lock = new();
     private readonly HandEvaluator _handEvaluator = new();
     internal Deck? Deck;
 
     public Guid LobbyId { get; }
     public string LobbyName { get; internal set; }
     public Guid? OwnerUserId { get; internal set; }
-    public int SmallBlind { get; internal set; }
-    public int BigBlind { get; internal set; }
+    public int SmallBlind { get; private set; }
+    public int BigBlind { get; private set; }
     public int Pot { get; set; }
     public int CurrentBet { get; internal set; }
     public int MinRaise { get; internal set; }
@@ -23,7 +23,7 @@ public sealed class GameSession
     public int SmallBlindIndex { get; internal set; } = -1;
     public int BigBlindIndex { get; internal set; } = -1;
     public int? CurrentTurnIndex { get; internal set; }
-    public GameResult? LastResult { get; internal set; }
+    public GameResult? LastResult { get; private set; }
     public List<GamePlayer> Players { get; } = new();
     public List<Card> Board { get; } = new();
 
@@ -45,7 +45,9 @@ public sealed class GameSession
     }
 
 
-    public void SyncPlayers(IEnumerable<(Guid UserId, string Username)> players, int startingChips)
+    private void SyncPlayers(
+        IEnumerable<(Guid UserId, string Username)> players,
+        int startingChips)
     {
         lock (_lock)
         {
@@ -101,7 +103,7 @@ public sealed class GameSession
         }
     }
 
-    public T WithLock<T>(Func<T> work)
+    private T WithLock<T>(Func<T> work)
     {
         lock (_lock)
         {
@@ -109,14 +111,14 @@ public sealed class GameSession
         }
     }
 
-    public bool HandlePlayerLeft(Guid userId)
+    public void HandlePlayerLeft(Guid userId)
     {
         lock (_lock)
         {
             var playerIndex = Players.FindIndex(p => p.UserId == userId);
             if (playerIndex < 0)
             {
-                return false;
+                return;
             }
 
             var player = Players[playerIndex];
@@ -129,25 +131,23 @@ public sealed class GameSession
 
             if (Phase is GamePhase.WaitingForPlayers or GamePhase.Showdown)
             {
-                return true;
+                return;
             }
 
             if (TryFinishHand())
             {
-                return true;
+                return;
             }
 
             if (TryAdvanceRound())
             {
-                return true;
+                return;
             }
 
             if (CurrentTurnIndex.HasValue && CurrentTurnIndex.Value < Players.Count && Players[CurrentTurnIndex.Value].UserId == userId)
             {
                 CurrentTurnIndex = NormalizeTurnIndex(FindNextIndex(CurrentTurnIndex.Value, p => p.CanAct));
             }
-
-            return true;
         }
     }
 
@@ -174,7 +174,7 @@ public sealed class GameSession
         LastResult = null;
     }
 
-    internal void ResetTableForNextHand()
+    private void ResetTableForNextHand()
     {
         Phase = GamePhase.WaitingForPlayers;
         Pot = 0;
@@ -193,17 +193,17 @@ public sealed class GameSession
     }
 
     public GameStartStatus StartHand()
-        => WithLock(() => _rules.StartHand(this));
+        => WithLock(() => TexasHoldemRules.StartHand(this));
 
     public GameActionResult ApplyAction(Guid userId, PlayerAction action, int amount)
-        => WithLock(() => _rules.ApplyAction(this, userId, action, amount));
+        => WithLock(() => TexasHoldemRules.ApplyAction(this, userId, action, amount));
 
     internal void DealHoleCards(Deck deck, int cardsPerPlayer)
     {
         var dealOrder = new List<GamePlayer>();
         var startIndex = SmallBlindIndex >= 0 ? SmallBlindIndex : 0;
         var index = startIndex;
-        for (var i = 0; i < Players.Count; i++)
+        foreach (var t in Players)
         {
             var player = Players[index];
             if (player.Chips > 0)
@@ -301,7 +301,7 @@ public sealed class GameSession
         return true;
     }
 
-    internal void DealBoardCards(int count)
+    private void DealBoardCards(int count)
     {
         if (Deck is null)
         {
@@ -389,7 +389,7 @@ public sealed class GameSession
         }
 
         var index = startIndex;
-        for (var i = 0; i < Players.Count; i++)
+        foreach (var t in Players)
         {
             index = (index + 1) % Players.Count;
             if (predicate(Players[index]))
@@ -405,20 +405,12 @@ public sealed class GameSession
         => index >= 0 ? index : null;
 }
 
-public sealed class GamePlayer
+public sealed class GamePlayer(Guid userId, string username, int seatIndex, int chips)
 {
-    public GamePlayer(Guid userId, string username, int seatIndex, int chips)
-    {
-        UserId = userId;
-        Username = username;
-        SeatIndex = seatIndex;
-        Chips = chips;
-    }
-
-    public Guid UserId { get; }
-    public string Username { get; set; }
-    public int SeatIndex { get; set; }
-    public int Chips { get; set; }
+    public Guid UserId { get; } = userId;
+    public string Username { get; set; } = username;
+    public int SeatIndex { get; set; } = seatIndex;
+    public int Chips { get; set; } = chips;
     public int CurrentBet { get; set; }
     public bool HasFolded { get; set; }
     public bool IsAllIn { get; set; }

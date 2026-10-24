@@ -1,7 +1,9 @@
 using System.Collections.Concurrent;
+using Api.Contracts;
+using Api.Services;
 using Microsoft.AspNetCore.SignalR;
 
-namespace Api;
+namespace Api.Hubs;
 
 // Project private cards separately for every connection, never for a shared group.
 public sealed class ArenaUpdates(Arena arena, IHubContext<ArenaHub> hub)
@@ -27,7 +29,8 @@ public sealed class ArenaUpdates(Arena arena, IHubContext<ArenaHub> hub)
         await _publishGate.WaitAsync();
         try
         {
-            foreach (var (connectionId, seat) in _connections.Where(c => c.Value.RoomId == roomId))
+            foreach (var (connectionId, seat) in 
+                     _connections.Where(c => c.Value.RoomId == roomId))
             {
                 object state;
                 try { state = arena.State(roomId, seat.PlayerId); }

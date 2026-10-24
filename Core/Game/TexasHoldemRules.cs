@@ -5,7 +5,7 @@ namespace Core.Game;
 
 public sealed class TexasHoldemRules
 {
-    public GameStartStatus StartHand(GameSession session)
+    public static GameStartStatus StartHand(GameSession session)
     {
         if (session.Phase is GamePhase.PreFlop or GamePhase.Flop or GamePhase.Turn or GamePhase.River)
         {
@@ -54,7 +54,7 @@ public sealed class TexasHoldemRules
         return GameStartStatus.Started;
     }
 
-    public GameActionResult ApplyAction(GameSession session, Guid userId, PlayerAction action, int amount)
+    public static GameActionResult ApplyAction(GameSession session, Guid userId, PlayerAction action, int amount)
     {
         if (session.Phase is GamePhase.WaitingForPlayers or GamePhase.Showdown)
         {

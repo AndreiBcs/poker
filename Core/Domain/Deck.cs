@@ -25,7 +25,7 @@ public class Deck
         Shuffle();
     }
 
-    public void Shuffle()
+    private void Shuffle()
     {
         for (var i = _cards.Count - 1; i > 0; i--)
         {

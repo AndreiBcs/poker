@@ -21,7 +21,10 @@ public class LobbyFlowTests
     private static async Task<HttpClient> Player(WebApplicationFactory<Program> factory, string nickname)
     {
         var client = factory.CreateClient();
-        var response = await HttpClientJsonExtensions.PostAsJsonAsync(client, "/api/players", new { nickname });
+        var response = await client.PostAsJsonAsync(
+            "/api/players",
+            new { nickname });
+        
         response.EnsureSuccessStatusCode();
         var body = await response.Content.ReadFromJsonAsync<JsonElement>();
         client.DefaultRequestHeaders.Add("X-Player-Id", body.GetProperty("id").GetString());
@@ -29,11 +32,22 @@ public class LobbyFlowTests
     }
     private static async Task<Guid> Create(HttpClient host, int maxPlayers = 6)
     {
-        var response = await host.PostAsJsonAsync("/api/lobbies", new { name = "Test table", password = "table-pass", maxPlayers });
+        var response = await host.PostAsJsonAsync(
+            "/api/lobbies",
+            new
+            {
+                name = "Test table",
+                password = "table-pass",
+                maxPlayers
+            });
+        
         response.EnsureSuccessStatusCode();
         return (await response.Content.ReadFromJsonAsync<JsonElement>()).GetProperty("id").GetGuid();
     }
-    private static Guid Id(HttpClient client) => Guid.Parse(client.DefaultRequestHeaders.GetValues("X-Player-Id").Single());
+    
+    private static Guid Id(HttpClient client) => 
+        Guid.Parse(client.DefaultRequestHeaders.GetValues("X-Player-Id").Single());
+    
     private sealed class LiveClient : IAsyncDisposable
     {
         private readonly HubConnection _connection;
@@ -41,11 +55,14 @@ public class LobbyFlowTests
 
         public LiveClient(WebApplicationFactory<Program> factory)
         {
-            _connection = new HubConnectionBuilder().WithUrl("http://localhost/api/live", options =>
-            {
-                options.HttpMessageHandlerFactory = _ => factory.Server.CreateHandler();
-                options.Transports = HttpTransportType.LongPolling;
-            }).Build();
+            _connection = new HubConnectionBuilder().WithUrl(
+                "http://localhost/api/live", 
+                options => 
+                {
+                    options.HttpMessageHandlerFactory = _ => factory.Server.CreateHandler();
+                    options.Transports = HttpTransportType.LongPolling;
+                }).Build();
+            
             _connection.On<JsonElement>("State", state => _states.Writer.TryWrite(state));
         }
 
@@ -80,12 +97,27 @@ public class LobbyFlowTests
     [Fact]
     public async Task NicknamesAndLobbyCapacityAreValidated()
     {
-        using var factory = new WebApplicationFactory<Program>();
+        await using var factory = new WebApplicationFactory<Program>();
         using var client = factory.CreateClient();
-        Assert.Equal(HttpStatusCode.BadRequest, (await HttpClientJsonExtensions.PostAsJsonAsync(client, "/api/players", new { nickname = " " })).StatusCode);
+        
+        Assert.Equal(
+            HttpStatusCode.BadRequest, 
+            (await client.PostAsJsonAsync("/api/players", new { nickname = " " })).StatusCode);
+        
         using var host = await Player(factory, "Host");
+        
         foreach (var count in new[] { 1, 11 })
-            Assert.Equal(HttpStatusCode.BadRequest, (await host.PostAsJsonAsync("/api/lobbies", new { name = "x", password = "p", maxPlayers = count })).StatusCode);
+            Assert.Equal(
+                HttpStatusCode.BadRequest, 
+                (await host.PostAsJsonAsync("/api/lobbies",
+                    new
+                    {
+                        name = "x",
+                        password = "p",
+                        maxPlayers = count 
+                        
+                    })).StatusCode);
+        
         var id = await Create(host, 10);
         var state = await host.GetFromJsonAsync<JsonElement>($"/api/lobbies/{id}");
         Assert.Equal(10, state.GetProperty("maxPlayers").GetInt32());
@@ -97,10 +129,11 @@ public class LobbyFlowTests
     [Fact]
     public async Task PasswordMembershipCapacityAndHostControlsAreEnforced()
     {
-        using var factory = new WebApplicationFactory<Program>();
+        await using var factory = new WebApplicationFactory<Program>();
         using var host = await Player(factory, "Host");
         using var guest = await Player(factory, "Guest");
         using var outsider = await Player(factory, "Outsider");
+        
         var id = await Create(host, 2);
         Assert.Equal(HttpStatusCode.Forbidden, (await guest.PostAsJsonAsync($"/api/lobbies/{id}/join", new { password = "wrong" })).StatusCode);
         Assert.Equal(HttpStatusCode.BadRequest, (await host.PostAsync($"/api/lobbies/{id}/start", null)).StatusCode);
@@ -116,7 +149,7 @@ public class LobbyFlowTests
     [Fact]
     public async Task LastPlayerLeavingClosesLobbyAndHostTransfers()
     {
-        using var factory = new WebApplicationFactory<Program>();
+        await using var factory = new WebApplicationFactory<Program>();
         using var host = await Player(factory, "Host");
         using var guest = await Player(factory, "Guest");
         var id = await Create(host);
@@ -131,7 +164,7 @@ public class LobbyFlowTests
     [Fact]
     public async Task ConcurrentJoinsCannotOverfillLastSeat()
     {
-        using var factory = new WebApplicationFactory<Program>();
+        await using var factory = new WebApplicationFactory<Program>();
         using var host = await Player(factory, "Host");
         using var a = await Player(factory, "A");
         using var b = await Player(factory, "B");
@@ -145,7 +178,7 @@ public class LobbyFlowTests
     [Fact]
     public async Task GameWaitsForConnectionsHidesCardsAndPausesOnDisconnect()
     {
-        using var factory = new WebApplicationFactory<Program>();
+        await using var factory = new WebApplicationFactory<Program>();
         using var host = await Player(factory, "Host");
         using var guest = await Player(factory, "Guest");
         var id = await Create(host);
@@ -192,7 +225,7 @@ public class LobbyFlowTests
     [Fact]
     public async Task HubRejectsNonMembersAndRepeatedJoins()
     {
-        using var factory = new WebApplicationFactory<Program>();
+        await using var factory = new WebApplicationFactory<Program>();
         using var host = await Player(factory, "Host");
         using var outsider = await Player(factory, "Outsider");
         var id = await Create(host);
@@ -206,7 +239,7 @@ public class LobbyFlowTests
     [Fact]
     public async Task ClosingOneOfTwoConnectionsKeepsSeatConnected()
     {
-        using var factory = new WebApplicationFactory<Program>();
+        await using var factory = new WebApplicationFactory<Program>();
         using var host = await Player(factory, "Host");
         var id = await Create(host);
         await using var first = new LiveClient(factory);

@@ -2,7 +2,7 @@ using Core.Domain;
 using Core.Domain.Enums;
 using Core.Game;
 
-namespace Api;
+namespace Api.Services;
 
 public sealed partial class Arena
 {
@@ -25,7 +25,13 @@ public sealed partial class Arena
                 Status = !room.StartRequested ? "waiting" : game is null ? "connecting" : allConnected ? "playing" : "paused",
                 room.Notice,
                 room.Revision,
-                Players = room.Players.Select(p => new { p.Id, p.Nickname, Connected = room.Connections.GetValueOrDefault(p.Id) > 0 }).ToArray(),
+                Players = room.Players.Select(p => 
+                    new
+                    {
+                        p.Id,
+                        p.Nickname,
+                        Connected = room.Connections.GetValueOrDefault(p.Id) > 0
+                    }).ToArray(),
                 Game = game is null ? null : ProjectGame(game, playerId, room.Players.Select(p => p.Id).ToHashSet())
             };
         }
@@ -51,7 +57,7 @@ public sealed partial class Arena
             IsDealer = p.SeatIndex == game.DealerIndex,
             IsSmallBlind = p.SeatIndex == game.SmallBlindIndex,
             IsBigBlind = p.SeatIndex == game.BigBlindIndex,
-            HoleCards = p.UserId == viewerId ? p.HoleCards.Select(Card).ToArray() : Array.Empty<string>(),
+            HoleCards = p.UserId == viewerId ? p.HoleCards.Select(Card).ToArray() : [],
             CardCount = p.HoleCards.Count
         }).ToArray(),
         game.LastResult
@@ -59,7 +65,22 @@ public sealed partial class Arena
 
     private static string Card(Card card)
     {
-        var rank = card.Rank switch { Rank.Ten => "10", Rank.Jack => "J", Rank.Queen => "Q", Rank.King => "K", Rank.Ace => "A", _ => ((int)card.Rank).ToString() };
-        return rank + (card.Suit switch { Suit.Hearts => "♥", Suit.Diamonds => "♦", Suit.Clubs => "♣", _ => "♠" });
+        var rank = card.Rank switch
+        {
+            Rank.Ten => "10",
+            Rank.Jack => "J",
+            Rank.Queen => "Q",
+            Rank.King => "K",
+            Rank.Ace => "A",
+            _ => ((int)card.Rank).ToString()
+        };
+        
+        return rank + card.Suit switch
+        {
+            Suit.Hearts => "♥",
+            Suit.Diamonds => "♦",
+            Suit.Clubs => "♣",
+            _ => "♠"
+        };
     }
 }

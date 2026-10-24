@@ -2,9 +2,31 @@ import type { PokerArena } from '../hooks/usePokerArena';
 import { api } from '../api';
 
 export function ArenaDialog({ arena }: { arena: PokerArena }) {
-  const { player, roomId, room, modal, setModal, error, busy, raise, setRaise, exitRoom, run, ensurePlayer, enter, command, host, game, maxRaise } = arena;
+  const 
+      {
+      player,
+      roomId,
+      room,
+      modal,
+      setModal,
+      error,
+      busy,
+      raise,
+      setRaise,
+      exitRoom,
+      run,
+      ensurePlayer,
+      enter,
+      command,
+      host,
+      game,
+      maxRaise
+    } = arena;
+  
   return <>
-    {modal && <div className="backdrop"><div role="dialog" aria-modal="true" aria-labelledby="dialog-title" className="dialog">
+    {modal && 
+        <div className="backdrop">
+          <div role="dialog" aria-modal="true" aria-labelledby="dialog-title" className="dialog">
       {modal.kind === 'join' && <form key={modal.lobby.id} onSubmit={e => {
         e.preventDefault(); const password = new FormData(e.currentTarget).get('password'); const id = modal.lobby.id;
         void run(async () => { const current = await ensurePlayer(); await api(`/lobbies/${id}/join`, current.id, 'POST', { password }); enter(id); });

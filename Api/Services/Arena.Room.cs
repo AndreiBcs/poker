@@ -1,6 +1,7 @@
+using Api.Contracts;
 using Core.Game;
 
-namespace Api;
+namespace Api.Services;
 
 public sealed partial class Arena
 {
@@ -16,8 +17,8 @@ public sealed partial class Arena
         public Dictionary<Guid, int> Connections { get; } = new();
         public GameSession? Game { get; set; }
         public bool StartRequested { get; set; }
-        public string Notice { get; set; } = "Lobby created.";
-        public long Revision { get; set; }
+        public string Notice { get; private set; } = "Lobby created.";
+        public long Revision { get; private set; }
         public void Announce(string text) { Notice = text; Revision++; }
     }
 }

@@ -1,6 +1,7 @@
+using Api.Contracts;
 using Microsoft.AspNetCore.SignalR;
 
-namespace Api;
+namespace Api.Hubs;
 
 public sealed class ArenaHub(ArenaUpdates updates) : Hub
 {
