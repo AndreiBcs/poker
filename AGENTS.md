@@ -47,13 +47,12 @@ npm run test:integration --prefix Frontend
 
 Playwright starts its own API on port 5080 and Vite on 5180. Stop a development API using 5080 before running it. It uses `/usr/bin/chromium` when available, or `PLAYWRIGHT_CHROMIUM_EXECUTABLE`; otherwise run `npx playwright install --with-deps chromium` from `Frontend` first. `npm run test:e2e` remains an alias for the integration suite.
 
-For interactive development, run these in separate terminals:
+For interactive development, run `npm run dev --prefix Frontend` from the repository root. This starts the API on 5080, waits for its health check, and then starts Vite on 5173. Stop it with Ctrl+C to shut down both services. In cloud tasks, source `/workspace/.setup/poker-env.sh` first so the .NET SDK is available.
 
-```sh
-dotnet run --project Api/Api.csproj --no-launch-profile --urls http://127.0.0.1:5080
-npm run dev --prefix Frontend
-```
+If managing the API separately, use `dotnet run --project Api/Api.csproj --no-launch-profile --urls http://127.0.0.1:5080` and `npm run dev:frontend --prefix Frontend`. Do not run the combined command alongside a separately started API on the same port.
 
-Vite uses port 5173 and proxies `/api`, including SignalR, to the API. Verify `curl -fsS http://127.0.0.1:5173/api/health` returns `{"status":"ok"}`. No database or message broker is required.
+Vite proxies `/api`, including SignalR, to the API. Verify `curl -fsS http://127.0.0.1:5173/api/health` returns `{"status":"ok"}`. No database or message broker is required.
+
+Frontend code uses Prettier: run `npm run format --prefix Frontend` after edits and `npm run format:check --prefix Frontend` to verify. Keep JSX and handlers multiline; keep HTTP mutations in hooks, not view markup. `useLobbyList` owns discovery polling; `useRoomConnection` owns live connections; `usePokerArena` coordinates session state and commands.
 
 CI builds the entire backend and frontend and runs backend tests excluding the `Category=Integration` trait. API integration tests carry that trait; browser tests carry `@integration` and are invoked only explicitly. Keep these tests runnable locally rather than disabling assertions or marking them permanently skipped.

@@ -4,12 +4,15 @@
   "version": "0.1.0",
   "type": "module",
   "scripts": {
-    "dev": "vite",
+    "dev": "node scripts/dev.mjs",
     "build": "tsc -b && vite build",
     "check": "tsc -b",
     "preview": "vite preview",
     "test:integration": "playwright test --grep @integration",
-    "test:e2e": "npm run test:integration"
+    "test:e2e": "npm run test:integration",
+    "dev:frontend": "vite",
+    "format": "prettier --write src",
+    "format:check": "prettier --check src"
   },
   "dependencies": {
     "@microsoft/signalr": "^10.0.11",
@@ -22,6 +25,7 @@
     "@types/react": "^19.2.0",
     "@types/react-dom": "^19.2.0",
     "@vitejs/plugin-react": "^6.0.0",
+    "prettier": "^3.9.10",
     "typescript": "^6.0.2",
     "vite": "^8.0.7"
   }
