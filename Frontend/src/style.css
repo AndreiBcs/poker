@@ -1,23 +1,126 @@
-:root { font-family: system-ui, sans-serif; color: #222; background: #fafafa; }
-body { margin: 0; }
-main { max-width: 1000px; margin: auto; padding: 1rem; }
-header, .row { display: flex; align-items: center; gap: 1rem; flex-wrap: wrap; }
-header h1 { margin-right: auto; }
-section { margin: 1rem 0; padding: 1rem; border: 1px solid #ccc; background: white; }
-form { display: grid; gap: .75rem; max-width: 380px; }
-label { display: grid; gap: .25rem; }
-input, button { font: inherit; padding: .45rem; }
-button { cursor: pointer; }
-button:disabled { cursor: default; }
-li { margin: .6rem 0; }
-.notice { padding: .75rem; border: 1px solid #b33; }
-.backdrop { position: fixed; inset: 0; background: #0007; display: grid; place-items: center; z-index: 2; padding: 1rem; }
-.dialog { background: white; padding: 1.5rem; max-width: 420px; width: 90%; max-height: 85vh; overflow: auto; }
-.dialog > button { margin-top: .75rem; }
-.table-wrap { overflow-x: auto; padding: 1rem 0; }
-.poker-table { position: relative; height: 580px; min-width: 720px; background: #e6eee8; border: 2px solid #777; border-radius: 45%; margin: 1rem; }
-.board { position: absolute; top: 45%; left: 30%; width: 40%; text-align: center; }
-.seat { position: absolute; transform: translate(-50%, -50%); text-align: center; width: 140px; font-size: .8rem; padding: .25rem; background: #fff; border: 1px solid #bbb; }
-.seat.turn { outline: 3px solid #426b49; }
-.avatar { display: inline-grid; place-items: center; border-radius: 50%; background: #ddd; width: 28px; height: 28px; margin-right: .3rem; }
-.card { display: inline-block; border: 1px solid #999; background: white; padding: .25rem; margin: .1rem; min-width: 1.3rem; }
+:root {
+  font-family: system-ui, sans-serif;
+  color: #222;
+  background: #fafafa;
+}
+body {
+  margin: 0;
+}
+main {
+  max-width: 1000px;
+  margin: auto;
+  padding: 1rem;
+}
+header,
+.row {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+header h1 {
+  margin-right: auto;
+}
+section {
+  margin: 1rem 0;
+  padding: 1rem;
+  border: 1px solid #ccc;
+  background: white;
+}
+form {
+  display: grid;
+  gap: 0.75rem;
+  max-width: 380px;
+}
+label {
+  display: grid;
+  gap: 0.25rem;
+}
+input,
+button {
+  font: inherit;
+  padding: 0.45rem;
+}
+button {
+  cursor: pointer;
+}
+button:disabled {
+  cursor: default;
+}
+li {
+  margin: 0.6rem 0;
+}
+.notice {
+  padding: 0.75rem;
+  border: 1px solid #b33;
+}
+.backdrop {
+  position: fixed;
+  inset: 0;
+  background: #0007;
+  display: grid;
+  place-items: center;
+  z-index: 2;
+  padding: 1rem;
+}
+.dialog {
+  background: white;
+  padding: 1.5rem;
+  max-width: 420px;
+  width: 90%;
+  max-height: 85vh;
+  overflow: auto;
+}
+.dialog > button {
+  margin-top: 0.75rem;
+}
+.table-wrap {
+  overflow-x: auto;
+  padding: 1rem 0;
+}
+.poker-table {
+  position: relative;
+  height: 580px;
+  min-width: 720px;
+  background: #e6eee8;
+  border: 2px solid #777;
+  border-radius: 45%;
+  margin: 1rem;
+}
+.board {
+  position: absolute;
+  top: 45%;
+  left: 30%;
+  width: 40%;
+  text-align: center;
+}
+.seat {
+  position: absolute;
+  transform: translate(-50%, -50%);
+  text-align: center;
+  width: 140px;
+  font-size: 0.8rem;
+  padding: 0.25rem;
+  background: #fff;
+  border: 1px solid #bbb;
+}
+.seat.turn {
+  outline: 3px solid #426b49;
+}
+.avatar {
+  display: inline-grid;
+  place-items: center;
+  border-radius: 50%;
+  background: #ddd;
+  width: 28px;
+  height: 28px;
+  margin-right: 0.3rem;
+}
+.card {
+  display: inline-block;
+  border: 1px solid #999;
+  background: white;
+  padding: 0.25rem;
+  margin: 0.1rem;
+  min-width: 1.3rem;
+}

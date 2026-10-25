@@ -1,3 +1,4 @@
+import { useLobbyList } from './useLobbyList';
 import { useEffect, useRef, useState } from 'react';
 import { api, ApiError } from '../api';
 import type { LobbySummary, Player, Room } from '../types';
@@ -9,7 +10,11 @@ const playerKey = 'poker.player';
 const roomKey = 'poker.room';
 
 function storedPlayer(): Player | null {
-  try { return JSON.parse(sessionStorage.getItem(playerKey) || 'null'); } catch { return null; }
+  try {
+    return JSON.parse(sessionStorage.getItem(playerKey) || 'null');
+  } catch {
+    return null;
+  }
 }
 
 export function usePokerArena() {
@@ -19,7 +24,6 @@ export function usePokerArena() {
   const [view, setView] = useState<'home' | 'lobbies'>('home');
   const [roomId, setRoomId] = useState<string | null>(sessionStorage.getItem(roomKey));
   const [room, setRoom] = useState<Room | null>(null);
-  const [lobbies, setLobbies] = useState<LobbySummary[]>([]);
   const [modal, setModal] = useState<Modal>(null);
   const [error, setError] = useState('');
   const [busy, setBusy] = useState(false);
@@ -29,22 +33,36 @@ export function usePokerArena() {
 
   function exitRoom() {
     sessionStorage.removeItem(roomKey);
-    setRoomId(null); setRoom(null); setModal(null); setView('lobbies');
+    setRoomId(null);
+    setRoom(null);
+    setModal(null);
+    setView('lobbies');
   }
 
   async function run(work: () => Promise<void>) {
     if (busyRef.current) return;
-    busyRef.current = true; setBusy(true); setError('');
-    try { await work(); }
-    catch (e) { setError(e instanceof Error ? e.message : 'Something went wrong. Please retry.'); }
-    finally { busyRef.current = false; setBusy(false); }
+    busyRef.current = true;
+    setBusy(true);
+    setError('');
+    try {
+      await work();
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'Something went wrong. Please retry.');
+    } finally {
+      busyRef.current = false;
+      setBusy(false);
+    }
   }
 
   async function ensurePlayer() {
     let current = player;
     if (current && current.nickname === nickname.trim()) {
-      try { await api(`/players/${current.id}`); return current; }
-      catch (e) { if (!(e instanceof ApiError) || e.status !== 404) throw e; }
+      try {
+        await api(`/players/${current.id}`);
+        return current;
+      } catch (e) {
+        if (!(e instanceof ApiError) || e.status !== 404) throw e;
+      }
     }
     current = await api<Player>('/players', undefined, 'POST', { nickname });
     setPlayer(current);
@@ -53,24 +71,22 @@ export function usePokerArena() {
     return current;
   }
 
-  function enter(id: string) { sessionStorage.setItem(roomKey, id); setRoomId(id); setModal(null); }
+  function enter(id: string) {
+    sessionStorage.setItem(roomKey, id);
+    setRoomId(id);
+    setModal(null);
+  }
 
-  useEffect(() => {
-    if (view !== 'lobbies' || roomId) return;
-    let stopped = false;
-    const load = async () => {
-      try { const result = await api<LobbySummary[]>('/lobbies'); if (!stopped) setLobbies(result); }
-      catch (e) { if (!stopped) setError(e instanceof Error ? e.message : 'Cannot load lobbies.'); }
-    };
-    void load(); const timer = setInterval(() => void load(), 2000);
-    return () => { stopped = true; clearInterval(timer); };
-  }, [view, roomId]);
+  const lobbies = useLobbyList(view === 'lobbies' && !roomId, setError);
 
   useRoomConnection(roomId, player, setRoom, setLive, setError, exitRoom);
 
   // Refreshing a tab preserves its seat; nickname persists across browser visits.
   useEffect(() => {
-    if (roomId && !player) { sessionStorage.removeItem(roomKey); setRoomId(null); }
+    if (roomId && !player) {
+      sessionStorage.removeItem(roomKey);
+      setRoomId(null);
+    }
   }, [roomId, player]);
 
   async function command(path: string, body?: unknown, method = 'POST') {
@@ -79,15 +95,71 @@ export function usePokerArena() {
     setModal(null);
   }
 
+  async function createLobby(form: FormData) {
+    const current = await ensurePlayer();
+    const result = await api<{ id: string }>('/lobbies', current.id, 'POST', {
+      name: form.get('name'),
+      password: form.get('password'),
+      maxPlayers: Number(form.get('maxPlayers')),
+      smallBlind: Number(form.get('smallBlind')),
+      bigBlind: Number(form.get('bigBlind')),
+    });
+    enter(result.id);
+  }
+
+  async function joinLobby(id: string, password: FormDataEntryValue | null) {
+    const current = await ensurePlayer();
+    await api(`/lobbies/${id}/join`, current.id, 'POST', { password });
+    enter(id);
+  }
+
+  async function leaveLobby() {
+    await api(`/lobbies/${roomId}/leave`, player!.id, 'POST');
+    exitRoom();
+  }
+
   const host = !!room && player?.id === room.ownerId;
   const game = room?.game;
   const myTurn = game?.currentTurnUserId === player?.id;
-  const mySeat = game?.players.find(p => p.id === player?.id);
+  const mySeat = game?.players.find((p) => p.id === player?.id);
   const toCall = game && mySeat ? game.currentBet - mySeat.currentBet : 0;
   const maxRaise = mySeat ? mySeat.chips - toCall : 0;
   const canAct = live && room?.status === 'playing' && myTurn && !busy;
 
-  return { nickname, setNickname, editingNickname, setEditingNickname, player, view, setView, roomId, room, lobbies, modal, setModal, error, setError, busy, live, raise, setRaise, exitRoom, run, ensurePlayer, enter, command, host, game, myTurn, toCall, maxRaise, canAct };
+  return {
+    createLobby,
+    joinLobby,
+    leaveLobby,
+    nickname,
+    setNickname,
+    editingNickname,
+    setEditingNickname,
+    player,
+    view,
+    setView,
+    roomId,
+    room,
+    lobbies,
+    modal,
+    setModal,
+    error,
+    setError,
+    busy,
+    live,
+    raise,
+    setRaise,
+    exitRoom,
+    run,
+    ensurePlayer,
+    enter,
+    command,
+    host,
+    game,
+    myTurn,
+    toCall,
+    maxRaise,
+    canAct,
+  };
 }
 
 export type PokerArena = ReturnType<typeof usePokerArena>;
