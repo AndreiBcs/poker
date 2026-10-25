@@ -1,6 +1,5 @@
 using Core.Domain.Enums;
 using HoldemPoker.Evaluator;
-using Card = Core.Domain.Card;
 
 namespace Core.Domain;
 
@@ -34,7 +33,7 @@ public class HandEvaluator
         return cards.Select(c =>
         {
 
-            string rankString = c.Rank switch
+            var rankString = c.Rank switch
             {
                 Rank.Ten => "T",
                 Rank.Jack => "J",
@@ -43,7 +42,7 @@ public class HandEvaluator
                 Rank.Ace => "A",
                 _ => ((int)c.Rank).ToString()
             };
-            string suitString = c.Suit.ToString()[0].ToString().ToLower();
+            var suitString = c.Suit.ToString()[0].ToString().ToLower();
 
             return HoldemPoker.Cards.Card.Parse($"{rankString}{suitString}");
         });

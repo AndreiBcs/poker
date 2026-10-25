@@ -1,9 +1,13 @@
 using System.Text.Json;
 using System.Text.Json.Serialization;
+using Api.Contracts;
+using Api.Endpoints;
+using Api.Hubs;
+using Api.Services;
 
 namespace Api;
 
-public partial class Program
+public class Program
 {
     public static void Main(string[] args)
     {

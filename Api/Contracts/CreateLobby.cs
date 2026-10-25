@@ -1,4 +1,8 @@
-namespace Api;
+namespace Api.Contracts;
 
-public record CreateLobby(string Name, string Password, int MaxPlayers = 6,
-    int SmallBlind = 25, int BigBlind = 50);
+public record CreateLobby(
+    string Name,
+    string Password,
+    int MaxPlayers = 6,
+    int SmallBlind = 25,
+    int BigBlind = 50);

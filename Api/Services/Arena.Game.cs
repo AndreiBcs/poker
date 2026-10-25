@@ -1,6 +1,7 @@
+using Api.Contracts;
 using Core.Game;
 
-namespace Api;
+namespace Api.Services;
 
 public sealed partial class Arena
 {
@@ -13,9 +14,14 @@ public sealed partial class Arena
             if (room.Players.Count < 2) Fail("At least two players are needed.");
             if (room.Game is not null)
             {
-                if (!room.Players.All(p => room.Connections.GetValueOrDefault(p.Id) > 0)) Fail("Waiting for every player to reconnect.");
+                if (!room.Players.All(p => room.Connections.GetValueOrDefault(p.Id) > 0)) 
+                    Fail("Waiting for every player to reconnect.");
+                
                 var status = room.Game.StartHand();
-                if (status != GameStartStatus.Started) Fail(status == GameStartStatus.NotEnoughPlayers ? "Not enough players with chips." : "A hand is already active.");
+                if (status != GameStartStatus.Started) 
+                    Fail(status == GameStartStatus.NotEnoughPlayers ? 
+                        "Not enough players with chips." : "A hand is already active.");
+                
                 room.Announce("A new hand started.");
                 return;
             }
@@ -60,7 +66,8 @@ public sealed partial class Arena
 
     private static GameSession ActiveGame(Room room)
     {
-        if (!room.Players.All(p => room.Connections.GetValueOrDefault(p.Id) > 0)) Fail("Game paused until every player reconnects.");
+        if (!room.Players.All(p => room.Connections.GetValueOrDefault(p.Id) > 0)) 
+            Fail("Game paused until every player reconnects.");
         return room.Game ?? throw new ArenaException(409, "Game has not started.");
     }
 
