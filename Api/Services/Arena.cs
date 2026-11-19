@@ -1,5 +1,6 @@
 using System.Security.Cryptography;
 using Api.Contracts;
+using Core.Game;
 
 namespace Api.Services;
 
@@ -8,15 +9,51 @@ public sealed partial class Arena
     private readonly Lock _gate = new();
     private readonly Dictionary<Guid, Player> _players = new();
     private readonly Dictionary<Guid, Room> _rooms = new();
+    private readonly Dictionary<Guid, GameSession> _games = new();
+    private readonly Dictionary<string, Guid> _seatTokens = new();
 
-    public Player Register(RegisterPlayer request)
+    public (Player Player, string Token) Register(RegisterPlayer request, string? token)
     {
         lock (_gate)
         {
             var nickname = Clean(request.Nickname, 24, "Nickname");
+            if (token is not null && _seatTokens.TryGetValue(token, out var id))
+            {
+                var current = _players[id];
+                if (nickname == current.Nickname) return (current, token);
+                EnsureAvailable(id);
+                var renamed = current with { Nickname = nickname };
+                _players[id] = renamed;
+                return (renamed, token);
+            }
+
             var player = new Player(Guid.NewGuid(), nickname);
+            var newToken = Convert.ToHexString(RandomNumberGenerator.GetBytes(32));
             _players.Add(player.Id, player);
-            return player;
+            _seatTokens.Add(newToken, player.Id);
+            return (player, newToken);
+        }
+    }
+
+    public Guid SeatId(string? token)
+    {
+        lock (_gate)
+        {
+            if (token is not null && _seatTokens.TryGetValue(token, out var id)) return id;
+            throw new ArenaException(401, "Set a nickname before playing.");
+        }
+    }
+
+    public object SeatState(Guid playerId)
+    {
+        lock (_gate)
+        {
+            var room = ActiveRoom(playerId);
+            return new
+            {
+                Player = GetPlayer(playerId),
+                SavedGame = room is null ? null : new SavedGame(room.Id, Game(room)?.SessionId, room.Name)
+            };
         }
     }
 
@@ -106,12 +143,23 @@ public sealed partial class Arena
         {
             var room = Member(roomId, playerId);
             var player = room.Players.First(p => p.Id == playerId);
-            room.Game?.HandlePlayerLeft(playerId);
+            var game = Game(room);
+            game?.HandlePlayerLeft(playerId);
             room.Players.Remove(player);
             room.Connections.Remove(playerId);
-            if (room.Players.Count == 0) { _rooms.Remove(roomId); return; }
-            if (room.OwnerId == playerId) room.OwnerId = room.Players[0].Id;
-            if (room.Game is null && room.Players.Count < 2) room.StartRequested = false;
+            if (room.Players.Count == 0)
+            {
+                _rooms.Remove(roomId);
+                _games.Remove(roomId);
+                return;
+            }
+            if (room.OwnerId == playerId)
+            {
+                var nextHost = game is null ? 0 : RandomNumberGenerator.GetInt32(room.Players.Count);
+                room.OwnerId = room.Players[nextHost].Id;
+                game?.UpdateLobbyInfo(room.Name, room.OwnerId);
+            }
+            if (game is null && room.Players.Count < 2) room.StartRequested = false;
             room.Announce($"{player.Nickname} left.");
             TryStart(room);
         }
@@ -135,8 +183,11 @@ public sealed partial class Arena
     }
     private void EnsureAvailable(Guid id)
     {
-        if (_rooms.Values.Any(r => r.Players.Any(p => p.Id == id))) Fail("Leave your current lobby first.");
+        if (ActiveRoom(id) is not null) Fail("Abandon your saved game or leave your current lobby first.");
     }
+
+    private Room? ActiveRoom(Guid id) => _rooms.Values.FirstOrDefault(room =>
+        room.Players.Any(p => p.Id == id) && !IsFinished(Game(room)));
     private static void RequireOwner(Room room, Guid id)
     {
         if (room.OwnerId != id) throw new ArenaException(403, "Only the host can do that.");

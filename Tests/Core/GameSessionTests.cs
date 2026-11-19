@@ -33,6 +33,31 @@ public class GameSessionTests
     }
 
     [Fact]
+    public void SittingOutKeepsTheStackAndReturningWaitsForTheNextDeal()
+    {
+        var game = Table(3);
+        Assert.Equal(GameStartStatus.Started, game.StartHand());
+        var away = game.Players[game.CurrentTurnIndex!.Value];
+        var stack = away.Chips;
+        game.SetSittingOut(away.UserId, true);
+        Assert.True(away.HasFolded);
+        Assert.Equal(stack, away.Chips);
+
+        var current = game.Players[game.CurrentTurnIndex!.Value];
+        Assert.True(game.ApplyAction(current.UserId, PlayerAction.Fold, 0).Success);
+        Assert.Equal(GameStartStatus.Started, game.StartHand());
+        game.SetSittingOut(away.UserId, false);
+        Assert.Empty(away.HoleCards);
+        Assert.False(away.CanAct);
+        Assert.Equal(stack, away.Chips);
+
+        current = game.Players[game.CurrentTurnIndex!.Value];
+        Assert.True(game.ApplyAction(current.UserId, PlayerAction.Fold, 0).Success);
+        Assert.Equal(GameStartStatus.Started, game.StartHand());
+        Assert.Equal(2, away.HoleCards.Count);
+    }
+
+    [Fact]
     public void BettingRejectsWrongTurnAndInvalidCheckAndFoldAwardsPot()
     {
         var game = Table(); game.StartHand();
@@ -47,6 +72,77 @@ public class GameSessionTests
         Assert.Equal(4000, game.Players.Sum(p => p.Chips));
         Assert.Equal(GameStartStatus.Started, game.StartHand());
         Assert.Equal(1, game.DealerIndex);
+    }
+
+    [Fact]
+    public void FullRaiseReopensBettingAndAllowsAnotherFullRaise()
+    {
+        var game = Table();
+        game.StartHand();
+        var (smallBlind, bigBlind) = (game.Players[0], game.Players[1]);
+        Assert.True(game.ApplyAction(smallBlind.UserId, PlayerAction.Raise, 51).Success);
+        Assert.Equal(102, game.MinimumRaiseChips(bigBlind.UserId));
+        Assert.False(game.ApplyAction(bigBlind.UserId, PlayerAction.Raise, 50).Success);
+        Assert.True(game.ApplyAction(bigBlind.UserId, PlayerAction.Raise, 69).Success);
+        Assert.Equal(170, game.CurrentBet);
+        Assert.Equal(138, game.MinimumRaiseChips(smallBlind.UserId));
+        Assert.True(game.ApplyAction(smallBlind.UserId, PlayerAction.Raise, 69).Success);
+        Assert.Equal(239, game.CurrentBet);
+    }
+
+    [Theory]
+    [InlineData(950, 1900, 1925, 25)]
+    [InlineData(1000, 1950, 1950, 0)]
+    public void BigBlindStackCanReraiseWithoutGoingAllInWhenItCoversTheMinimum(
+        int openingRaise, int minimumChips, int selectedChips, int remainingChips)
+    {
+        var game = Table();
+        game.StartHand();
+        var (smallBlind, bigBlind) = (game.Players[0], game.Players[1]);
+        Assert.Equal(1950, bigBlind.Chips);
+        Assert.True(game.ApplyAction(smallBlind.UserId, PlayerAction.Raise, openingRaise).Success);
+
+        Assert.Equal(minimumChips, game.MinimumRaiseChips(bigBlind.UserId));
+        Assert.False(game.ApplyAction(bigBlind.UserId, PlayerAction.Raise, minimumChips - openingRaise - 1).Success);
+        Assert.True(game.ApplyAction(bigBlind.UserId, PlayerAction.Raise, selectedChips - openingRaise).Success);
+        Assert.Equal(remainingChips, bigBlind.Chips);
+    }
+
+    [Fact]
+    public void ShortAllInDoesNotReopenBettingForTheOriginalRaiser()
+    {
+        var game = Table(3);
+        var (raiser, shortStack, bigBlind) = (game.Players[0], game.Players[1], game.Players[2]);
+        shortStack.Chips = 130;
+        game.StartHand();
+        Assert.True(game.ApplyAction(raiser.UserId, PlayerAction.Raise, 50).Success);
+        Assert.Equal(105, game.MinimumRaiseChips(shortStack.UserId));
+        Assert.False(game.ApplyAction(shortStack.UserId, PlayerAction.Raise, 29).Success);
+        Assert.True(game.ApplyAction(shortStack.UserId, PlayerAction.Raise, 30).Success);
+        Assert.Equal(50, game.MinRaise);
+        Assert.Equal(130, game.MinimumRaiseChips(bigBlind.UserId));
+        Assert.True(game.ApplyAction(bigBlind.UserId, PlayerAction.Call, 0).Success);
+        Assert.Null(game.MinimumRaiseChips(raiser.UserId));
+        Assert.False(game.ApplyAction(raiser.UserId, PlayerAction.Raise, 50).Success);
+        Assert.True(game.ApplyAction(raiser.UserId, PlayerAction.Call, 0).Success);
+        Assert.Equal(GamePhase.Flop, game.Phase);
+    }
+
+    [Fact]
+    public void CumulativeShortAllInsReopenBettingAtAFullRaise()
+    {
+        var game = Table(4);
+        var (firstShort, secondShort, bigBlind, raiser) = (game.Players[0], game.Players[1], game.Players[2], game.Players[3]);
+        firstShort.Chips = 130;
+        secondShort.Chips = 150;
+        game.StartHand();
+        Assert.True(game.ApplyAction(raiser.UserId, PlayerAction.Raise, 50).Success);
+        Assert.True(game.ApplyAction(firstShort.UserId, PlayerAction.Raise, 30).Success);
+        Assert.True(game.ApplyAction(secondShort.UserId, PlayerAction.Raise, 20).Success);
+        Assert.True(game.ApplyAction(bigBlind.UserId, PlayerAction.Call, 0).Success);
+        Assert.Equal(50, game.MinRaise);
+        Assert.Equal(100, game.MinimumRaiseChips(raiser.UserId));
+        Assert.True(game.ApplyAction(raiser.UserId, PlayerAction.Raise, 50).Success);
     }
 
     [Fact]

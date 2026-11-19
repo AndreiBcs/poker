@@ -12,12 +12,16 @@ export function LobbyBrowser({ arena }: { arena: PokerArena }) {
     busy,
     run,
     createLobby,
+    savedGame,
+    reconnectGame,
   } = arena;
   return (
     <>
       {!roomId && view === 'lobbies' && (
-        <>
+        <div className="lobby-layout">
           <button
+            className="nickname-button"
+            disabled={busy || !!savedGame}
             onClick={() => {
               setEditingNickname(true);
               setView('home');
@@ -25,16 +29,35 @@ export function LobbyBrowser({ arena }: { arena: PokerArena }) {
           >
             Change nickname
           </button>
+          {savedGame && (
+            <section className="saved-game">
+              <h2>Saved game</h2>
+              <p>{savedGame.name}</p>
+              <div className="row">
+                <button className="primary" disabled={busy} onClick={() => void run(reconnectGame)}>
+                  Reconnect
+                </button>
+                <button disabled={busy} onClick={() => setModal({ kind: 'abandon' })}>
+                  Abandon
+                </button>
+              </div>
+              <p className="muted">Abandon this game before joining or creating another lobby.</p>
+            </section>
+          )}
           <section>
             <h2>Open lobbies</h2>
             {!lobbies.length && <p>No open lobbies yet. Create one below.</p>}
-            <ul>
+            <ul className="entry-list">
               {lobbies.map((lobby) => (
                 <li key={lobby.id}>
-                  <strong>{lobby.name}</strong> · {lobby.playerCount}/{lobby.maxPlayers} players ·
-                  Password required{' '}
+                  <div>
+                    <strong>{lobby.name}</strong>
+                    <small>
+                      {lobby.playerCount}/{lobby.maxPlayers} players · Password required
+                    </small>
+                  </div>
                   <button
-                    disabled={busy || lobby.playerCount >= lobby.maxPlayers}
+                    disabled={busy || !!savedGame || lobby.playerCount >= lobby.maxPlayers}
                     onClick={() => {
                       setModal({ kind: 'join', lobby });
                       setError('');
@@ -98,10 +121,12 @@ export function LobbyBrowser({ arena }: { arena: PokerArena }) {
                   />
                 </label>
               </details>
-              <button disabled={busy}>Create lobby</button>
+              <button className="primary" disabled={busy || !!savedGame}>
+                Create lobby
+              </button>
             </form>
           </section>
-        </>
+        </div>
       )}
     </>
   );

@@ -12,9 +12,9 @@ public sealed class TexasHoldemRules
             return GameStartStatus.AlreadyInProgress;
         }
 
-        if (session.Players.Count(p => p.Chips > 0) < 2)
+        var activePlayers = session.Players.Count(player => player.CanBeDealtIn);
+        if (activePlayers < 2)
         {
-            session.ResetToWaiting();
             return GameStartStatus.NotEnoughPlayers;
         }
 
@@ -22,18 +22,17 @@ public sealed class TexasHoldemRules
 
         var deck = new Deck();
         session.Deck = deck;
-        session.DealerIndex = session.FindNextIndex(session.DealerIndex, player => player.Chips > 0);
-        var activePlayers = session.Players.Count(player => player.Chips > 0);
+        session.DealerIndex = session.FindNextIndex(session.DealerIndex, player => player.CanBeDealtIn);
 
         if (activePlayers == 2)
         {
             session.SmallBlindIndex = session.DealerIndex;
-            session.BigBlindIndex = session.FindNextIndex(session.DealerIndex, player => player.Chips > 0);
+            session.BigBlindIndex = session.FindNextIndex(session.DealerIndex, player => player.CanBeDealtIn);
         }
         else
         {
-            session.SmallBlindIndex = session.FindNextIndex(session.DealerIndex, player => player.Chips > 0);
-            session.BigBlindIndex = session.FindNextIndex(session.SmallBlindIndex, player => player.Chips > 0);
+            session.SmallBlindIndex = session.FindNextIndex(session.DealerIndex, player => player.CanBeDealtIn);
+            session.BigBlindIndex = session.FindNextIndex(session.SmallBlindIndex, player => player.CanBeDealtIn);
         }
 
         session.DealHoleCards(deck, 2);
@@ -111,9 +110,9 @@ public sealed class TexasHoldemRules
                     return new GameActionResult(false, "Raise amount must be positive.");
                 }
 
-                if (amount < session.MinRaise)
+                if (!session.MayRaise(player))
                 {
-                    return new GameActionResult(false, $"Minimum raise is {session.MinRaise}.");
+                    return new GameActionResult(false, "A raise is unavailable for this turn.");
                 }
 
                 var targetBet = (long)session.CurrentBet + amount;
@@ -128,19 +127,16 @@ public sealed class TexasHoldemRules
                     return new GameActionResult(false, "Not enough chips to raise.");
                 }
 
+                if (amount < session.MinRaise && needed != player.Chips)
+                {
+                    return new GameActionResult(false, $"Minimum raise is {session.MinRaise} unless going all-in.");
+                }
+
                 var raised = player.Bet((int)needed);
                 session.Pot += raised;
                 session.CurrentBet = player.CurrentBet;
-                session.MinRaise = amount;
+                session.MinRaise = Math.Max(session.MinRaise, amount);
                 player.HasActedThisRound = true;
-
-                foreach (var other in session.Players)
-                {
-                    if (other.UserId != player.UserId && other.CanAct)
-                    {
-                        other.HasActedThisRound = false;
-                    }
-                }
                 break;
             default:
                 return new GameActionResult(false, "Unknown action.");
@@ -156,7 +152,7 @@ public sealed class TexasHoldemRules
             return new GameActionResult(true, null);
         }
 
-        session.CurrentTurnIndex = session.NormalizeTurnIndex(session.FindNextIndex(playerIndex, p => p.CanAct));
+        session.CurrentTurnIndex = session.NormalizeTurnIndex(session.FindNextIndex(playerIndex, session.NeedsAction));
         return new GameActionResult(true, null);
     }
 }
