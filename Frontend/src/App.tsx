@@ -9,18 +9,37 @@ export default function App() {
   const { player, error, setError } = arena;
   return (
     <main>
-      <header>
-        <h1>Poker Arena</h1>
-        <span>Texas Hold’em</span>
-        {player && <span>Playing as {player.nickname}</span>}
+      <div className="background-suits" aria-hidden="true">
+        <span>♠</span>
+        <span>♥</span>
+        <span>♣</span>
+        <span>♦</span>
+      </div>
+      <header className="site-header">
+        <div className="site-title">
+          <span className="site-mark" aria-hidden="true">
+            ♦
+          </span>
+          <div>
+            <h1>Poker</h1>
+            <span>Texas Hold’em</span>
+          </div>
+        </div>
+        {player && <span className="identity">Playing as {player.nickname}</span>}
       </header>
       {error && (
         <div role="alert" className="notice">
           {error} <button onClick={() => setError('')}>Dismiss</button>
         </div>
       )}
-      <NicknameForm arena={arena} />
-      <LobbyBrowser arena={arena} />
+      {arena.checkingSeat ? (
+        <p role="status">Checking for a saved game…</p>
+      ) : (
+        <>
+          <NicknameForm arena={arena} />
+          <LobbyBrowser arena={arena} />
+        </>
+      )}
       <RoomView arena={arena} />
       <ArenaDialog arena={arena} />
     </main>

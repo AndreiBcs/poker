@@ -8,11 +8,10 @@ export function useRoomConnection(
   player: Player | null,
   setRoom: (room: Room) => void,
   setLive: (live: boolean) => void,
-  setError: (error: string) => void,
-  exitRoom: () => void,
+  onMembershipEnded: (message: string) => void,
 ) {
-  const exit = useRef(exitRoom);
-  exit.current = exitRoom;
+  const membershipEnded = useRef(onMembershipEnded);
+  membershipEnded.current = onMembershipEnded;
 
   useEffect(() => {
     if (!roomId || !player) return;
@@ -25,47 +24,54 @@ export function useRoomConnection(
     connection.on('State', (state: Room) => {
       if (!stopped) setRoom(state);
     });
-    connection.on('Removed', (message: string) => {
-      if (!stopped) {
-        setError(message);
-        exit.current();
-      }
-    });
+    connection.on('Removed', endMembership);
     const connect = async () => {
       try {
         // Revalidate membership on every reconnect, including after an API restart.
-        const state = await api<Room>(`/lobbies/${roomId}`, player.id);
+        const state = await api<Room>(`/lobbies/${roomId}`);
         if (stopped) return;
         setRoom(state);
+        if (state.status === 'finished') return;
         await connection.start();
         if (stopped) {
           await connection.stop();
           return;
         }
-        await connection.invoke('JoinRoom', roomId, player.id);
+        await connection.invoke('JoinRoom', roomId);
         if (!stopped) setLive(true);
       } catch (error) {
         if (stopped) return;
+        if (error instanceof ApiError && [401, 403, 404].includes(error.status)) {
+          endMembership(error.message);
+          return;
+        }
         await connection.stop();
-        if (error instanceof ApiError && [403, 404].includes(error.status)) {
-          setError(error.message);
-          exit.current();
-        } else schedule();
+        schedule();
       }
     };
+
+    function endMembership(message: string) {
+      if (stopped) return;
+      stop();
+      membershipEnded.current(message);
+    }
+
     function schedule() {
       if (stopped) return;
       setLive(false);
       clearTimeout(retry);
       retry = setTimeout(() => void connect(), 1200);
     }
-    connection.onclose(schedule);
-    void connect();
-    return () => {
+    function stop() {
+      if (stopped) return;
       stopped = true;
       clearTimeout(retry);
       void connection.stop();
       setLive(false);
-    };
-  }, [roomId, player, setRoom, setLive, setError]);
+    }
+
+    connection.onclose(schedule);
+    void connect();
+    return stop;
+  }, [roomId, player, setRoom, setLive]);
 }

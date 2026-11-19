@@ -16,7 +16,7 @@ export function NicknameForm({ arena }: { arena: PokerArena }) {
   return (
     <>
       {!roomId && view === 'home' && (
-        <section>
+        <section className="welcome-panel">
           <h2>Take a seat</h2>
           <form
             onSubmit={(e) => {
@@ -49,7 +49,9 @@ export function NicknameForm({ arena }: { arena: PokerArena }) {
                 </p>
               )}
             </>
-            <button disabled={busy || !nickname.trim()}>Look for lobbies</button>
+            <button className="primary" disabled={busy || !nickname.trim()}>
+              Look for lobbies
+            </button>
           </form>
         </section>
       )}

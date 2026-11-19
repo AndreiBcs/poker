@@ -1,14 +1,19 @@
 using Api.Contracts;
+using Api.Services;
 using Microsoft.AspNetCore.SignalR;
 
 namespace Api.Hubs;
 
-public sealed class ArenaHub(ArenaUpdates updates) : Hub
+public sealed class ArenaHub(ArenaUpdates updates, Arena arena) : Hub
 {
-    public async Task JoinRoom(Guid roomId, Guid playerId)
+    public async Task JoinRoom(Guid roomId)
     {
         if (Context.Items.ContainsKey("joined")) throw new HubException("Already connected to a lobby.");
-        try { updates.Connect(Context.ConnectionId, roomId, playerId); }
+        try
+        {
+            var playerId = arena.SeatId(Context.GetHttpContext()?.Request.Cookies[SeatCookie.Name]);
+            updates.Connect(Context.ConnectionId, roomId, playerId);
+        }
         catch (ArenaException ex) { throw new HubException(ex.Message); }
         Context.Items["joined"] = true;
         await updates.Publish(roomId);

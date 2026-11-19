@@ -1,4 +1,5 @@
 using Api.Contracts;
+using Core.Domain.Enums;
 using Core.Game;
 
 namespace Api.Services;
@@ -12,15 +13,16 @@ public sealed partial class Arena
             var room = Member(roomId, playerId);
             RequireOwner(room, playerId);
             if (room.Players.Count < 2) Fail("At least two players are needed.");
-            if (room.Game is not null)
+            var game = Game(room);
+            if (game is not null)
             {
-                if (!room.Players.All(p => room.Connections.GetValueOrDefault(p.Id) > 0)) 
+                if (!PlayersConnected(room, game))
                     Fail("Waiting for every player to reconnect.");
                 
-                var status = room.Game.StartHand();
+                var status = game.StartHand();
                 if (status != GameStartStatus.Started) 
-                    Fail(status == GameStartStatus.NotEnoughPlayers ? 
-                        "Not enough players with chips." : "A hand is already active.");
+                    Fail(status == GameStartStatus.NotEnoughPlayers ?
+                        "At least two players with chips must be at the table." : "A hand is already active.");
                 
                 room.Announce("A new hand started.");
                 return;
@@ -36,8 +38,24 @@ public sealed partial class Arena
         lock (_gate)
         {
             var room = Member(roomId, playerId);
+            var game = Game(room);
+            if (IsFinished(game)) throw new ArenaException(409, "This game has ended.");
+            game?.SetSittingOut(playerId, false);
             room.Connections[playerId] = room.Connections.GetValueOrDefault(playerId) + 1;
+            room.Touch();
             TryStart(room);
+        }
+    }
+
+    public void StepAway(Guid roomId, Guid playerId)
+    {
+        lock (_gate)
+        {
+            var room = Member(roomId, playerId);
+            var game = Game(room);
+            if (game is null) throw new ArenaException(409, "Game has not started.");
+            game.SetSittingOut(playerId, true);
+            room.Announce($"{GetPlayer(playerId).Nickname} stepped away.");
         }
     }
 
@@ -48,7 +66,8 @@ public sealed partial class Arena
             if (!_rooms.TryGetValue(roomId, out var room)) return;
             var count = room.Connections.GetValueOrDefault(playerId);
             if (count > 1) room.Connections[playerId] = count - 1;
-            else room.Connections.Remove(playerId);
+            else if (!room.Connections.Remove(playerId)) return;
+            room.Touch();
         }
     }
 
@@ -64,20 +83,30 @@ public sealed partial class Arena
         }
     }
 
-    private static GameSession ActiveGame(Room room)
+    private GameSession ActiveGame(Room room)
     {
-        if (!room.Players.All(p => room.Connections.GetValueOrDefault(p.Id) > 0)) 
-            Fail("Game paused until every player reconnects.");
-        return room.Game ?? throw new ArenaException(409, "Game has not started.");
+        var game = Game(room) ?? throw new ArenaException(409, "Game has not started.");
+        if (!PlayersConnected(room, game)) Fail("Game paused until players reconnect.");
+        return game;
     }
 
-    private static void TryStart(Room room)
+    private GameSession? Game(Room room) => _games.GetValueOrDefault(room.Id);
+
+    private static bool IsFinished(GameSession? game) =>
+        game is { Phase: GamePhase.WaitingForPlayers } && !game.HasEnoughPlayers();
+
+    private static bool PlayersConnected(Room room, GameSession game) => game.Players
+        .Where(p => game.Phase == GamePhase.WaitingForPlayers ? p.Chips > 0 && !p.IsSittingOut : p.IsInHand)
+        .All(p => room.Connections.GetValueOrDefault(p.UserId) > 0);
+
+    private void TryStart(Room room)
     {
-        if (!room.StartRequested || room.Game is not null || room.Players.Count < 2 ||
+        if (!room.StartRequested || Game(room) is not null || room.Players.Count < 2 ||
             !room.Players.All(p => room.Connections.GetValueOrDefault(p.Id) > 0)) return;
-        room.Game = new GameSession(room.Id, room.Name, room.OwnerId, room.Settings.SmallBlind, room.Settings.BigBlind,
+        var game = new GameSession(room.Id, room.Name, room.OwnerId, room.Settings.SmallBlind, room.Settings.BigBlind,
             room.Players.Select(p => (p.Id, p.Nickname)).ToList(), 2000);
-        room.Game.StartHand();
+        game.StartHand();
+        _games.Add(room.Id, game);
         room.Announce("All players connected. The game has begun.");
     }
 }

@@ -6,17 +6,11 @@ export class ApiError extends Error {
     super(message);
   }
 }
-export async function api<T>(
-  path: string,
-  playerId?: string,
-  method = 'GET',
-  body?: unknown,
-): Promise<T> {
+export async function api<T>(path: string, method = 'GET', body?: unknown): Promise<T> {
   const response = await fetch(`/api${path}`, {
     method,
     headers: {
       ...(body === undefined ? {} : { 'Content-Type': 'application/json' }),
-      ...(playerId ? { 'X-Player-Id': playerId } : {}),
     },
     body: body === undefined ? undefined : JSON.stringify(body),
   });

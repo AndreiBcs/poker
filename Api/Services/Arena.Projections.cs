@@ -1,3 +1,4 @@
+using Api.Contracts;
 using Core.Domain;
 using Core.Domain.Enums;
 using Core.Game;
@@ -6,13 +7,14 @@ namespace Api.Services;
 
 public sealed partial class Arena
 {
-    public object State(Guid roomId, Guid playerId)
+    public object State(Guid roomId, Guid playerId, Guid? sessionId = null)
     {
         lock (_gate)
         {
             var room = Member(roomId, playerId);
-            var game = room.Game;
-            var allConnected = room.Players.All(p => room.Connections.GetValueOrDefault(p.Id) > 0);
+            var game = Game(room);
+            if (sessionId.HasValue && (game?.SessionId != sessionId || IsFinished(game)))
+                throw new ArenaException(404, "This saved game is no longer active.");
             return new
             {
                 room.Id,
@@ -22,7 +24,8 @@ public sealed partial class Arena
                 room.Settings.SmallBlind,
                 room.Settings.BigBlind,
                 room.StartRequested,
-                Status = !room.StartRequested ? "waiting" : game is null ? "connecting" : allConnected ? "playing" : "paused",
+                Status = !room.StartRequested ? "waiting" : game is null ? "connecting" :
+                    IsFinished(game) ? "finished" : PlayersConnected(room, game) ? "playing" : "paused",
                 room.Notice,
                 room.Revision,
                 Players = room.Players.Select(p => 
@@ -39,10 +42,12 @@ public sealed partial class Arena
 
     private static object ProjectGame(GameSession game, Guid viewerId, HashSet<Guid> members) => new
     {
+        game.SessionId,
         game.Phase,
         game.Pot,
         game.CurrentBet,
         game.MinRaise,
+        MinimumRaiseChips = game.MinimumRaiseChips(viewerId),
         CurrentTurnUserId = game.CurrentTurnIndex is { } turn ? game.Players[turn].UserId : (Guid?)null,
         Board = game.Board.Select(Card).ToArray(),
         Players = game.Players.Where(p => members.Contains(p.UserId)).Select(p => new
@@ -54,13 +59,20 @@ public sealed partial class Arena
             p.CurrentBet,
             p.HasFolded,
             p.IsAllIn,
+            p.IsSittingOut,
             IsDealer = p.SeatIndex == game.DealerIndex,
             IsSmallBlind = p.SeatIndex == game.SmallBlindIndex,
             IsBigBlind = p.SeatIndex == game.BigBlindIndex,
             HoleCards = p.UserId == viewerId ? p.HoleCards.Select(Card).ToArray() : [],
             CardCount = p.HoleCards.Count
         }).ToArray(),
-        game.LastResult
+        LastResult = game.LastResult is { } result ? new
+        {
+            result.Pot,
+            result.HandDescription,
+            result.Winners,
+            Board = result.Board.Select(Card).ToArray()
+        } : null
     };
 
     private static string Card(Card card)

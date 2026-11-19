@@ -11,6 +11,7 @@ public sealed class GameSession
     internal Deck? Deck;
 
     public Guid LobbyId { get; }
+    public Guid SessionId { get; } = Guid.NewGuid();
     public string LobbyName { get; internal set; }
     public Guid? OwnerUserId { get; internal set; }
     public int SmallBlind { get; private set; }
@@ -111,7 +112,24 @@ public sealed class GameSession
         }
     }
 
-    public void HandlePlayerLeft(Guid userId)
+    public void HandlePlayerLeft(Guid userId) => SitOut(userId, abandon: true);
+
+    public void SetSittingOut(Guid userId, bool sittingOut)
+    {
+        if (sittingOut)
+        {
+            SitOut(userId, abandon: false);
+            return;
+        }
+
+        lock (_lock)
+        {
+            var player = Players.Find(p => p.UserId == userId);
+            if (player is not null && !player.HasAbandoned) player.IsSittingOut = false;
+        }
+    }
+
+    private void SitOut(Guid userId, bool abandon)
     {
         lock (_lock)
         {
@@ -122,14 +140,19 @@ public sealed class GameSession
             }
 
             var player = Players[playerIndex];
+            var wasInHand = player.IsInHand;
+            player.IsSittingOut = true;
             player.HasFolded = true;
             player.IsAllIn = false;
             player.HasActedThisRound = true;
-            player.Chips = 0;
-            player.CurrentBet = 0;
             player.HoleCards.Clear();
+            if (abandon)
+            {
+                player.HasAbandoned = true;
+                player.Chips = 0;
+            }
 
-            if (Phase is GamePhase.WaitingForPlayers or GamePhase.Showdown)
+            if (!wasInHand || Phase is GamePhase.WaitingForPlayers or GamePhase.Showdown)
             {
                 return;
             }
@@ -146,7 +169,7 @@ public sealed class GameSession
 
             if (CurrentTurnIndex.HasValue && CurrentTurnIndex.Value < Players.Count && Players[CurrentTurnIndex.Value].UserId == userId)
             {
-                CurrentTurnIndex = NormalizeTurnIndex(FindNextIndex(CurrentTurnIndex.Value, p => p.CanAct));
+                CurrentTurnIndex = NormalizeTurnIndex(FindNextIndex(CurrentTurnIndex.Value, NeedsAction));
             }
         }
     }
@@ -155,7 +178,7 @@ public sealed class GameSession
     {
         lock (_lock)
         {
-            return Players.Count(player => player.Chips > 0) >= 2;
+            return Players.Count(player => player.Chips > 0 && !player.HasAbandoned) >= 2;
         }
     }
 
@@ -198,6 +221,31 @@ public sealed class GameSession
     public GameActionResult ApplyAction(Guid userId, PlayerAction action, int amount)
         => WithLock(() => TexasHoldemRules.ApplyAction(this, userId, action, amount));
 
+    public int? MinimumRaiseChips(Guid userId)
+    {
+        lock (_lock)
+        {
+            if (CurrentTurnIndex is not { } turn) return null;
+            var player = Players[turn];
+            if (player.UserId != userId || !MayRaise(player)) return null;
+
+            var toCall = CurrentBet - player.CurrentBet;
+            return (int)Math.Min(player.Chips, (long)toCall + MinRaise);
+        }
+    }
+
+    internal bool MayRaise(GamePlayer player)
+    {
+        var toCall = CurrentBet - player.CurrentBet;
+        // The player's contribution records the bet they last acted on this street.
+        return player.CanAct && player.Chips > toCall &&
+            (!player.HasActedThisRound || toCall >= MinRaise) &&
+            Players.Any(other => other != player && other.CanAct);
+    }
+
+    internal bool NeedsAction(GamePlayer player) =>
+        player.CanAct && (!player.HasActedThisRound || player.CurrentBet != CurrentBet);
+
     internal void DealHoleCards(Deck deck, int cardsPerPlayer)
     {
         var dealOrder = new List<GamePlayer>();
@@ -206,7 +254,7 @@ public sealed class GameSession
         foreach (var t in Players)
         {
             var player = Players[index];
-            if (player.Chips > 0)
+            if (player.CanBeDealtIn)
             {
                 dealOrder.Add(player);
             }
@@ -240,7 +288,7 @@ public sealed class GameSession
             LastResult = new GameResult(Pot, "All others folded.", new List<GameWinner>
             {
                 new(winner.UserId, winner.Username, Pot)
-            });
+            }) { Board = Board.ToArray() };
             ResetTableForNextHand();
             return true;
         }
@@ -340,15 +388,17 @@ public sealed class GameSession
             var sidePot = (level - previous) * contributors.Count;
             previous = level;
             var eligible = activePlayers.Where(p => p.TotalCommitted >= level).ToList();
-            // A sole uncalled contribution is returned even if its owner left.
             if (eligible.Count == 0)
             {
                 // No live hand matched this portion: return the uncalled chips.
                 foreach (var contributor in contributors)
                 {
                     var refund = sidePot / contributors.Count;
-                    contributor.Chips += refund;
-                    winnings[contributor.UserId] = winnings.GetValueOrDefault(contributor.UserId) + refund;
+                    if (!contributor.HasAbandoned)
+                    {
+                        contributor.Chips += refund;
+                        winnings[contributor.UserId] = winnings.GetValueOrDefault(contributor.UserId) + refund;
+                    }
                 }
                 continue;
             }
@@ -366,20 +416,12 @@ public sealed class GameSession
         var bestPlayer = activePlayers.MinBy(p => _handEvaluator.EvaluateScore(p.HoleCards, Board));
         LastResult = new GameResult(Pot,
             bestPlayer is null ? "" : _handEvaluator.GetHandDescription(bestPlayer.HoleCards, Board),
-            winnings.Select(w => new GameWinner(w.Key, Players.First(p => p.UserId == w.Key).Username, w.Value)).ToList());
+            winnings.Select(w => new GameWinner(w.Key, Players.First(p => p.UserId == w.Key).Username, w.Value)).ToList())
+        { Board = Board.ToArray() };
         ResetTableForNextHand();
     }
 
-    private bool IsBettingRoundComplete()
-    {
-        var bettingPlayers = Players.Where(p => p.CanAct).ToList();
-        if (bettingPlayers.Count == 0)
-        {
-            return true;
-        }
-
-        return bettingPlayers.All(player => player.HasActedThisRound && player.CurrentBet == CurrentBet);
-    }
+    private bool IsBettingRoundComplete() => !Players.Any(NeedsAction);
 
     internal int FindNextIndex(int startIndex, Func<GamePlayer, bool> predicate)
     {
@@ -415,18 +457,21 @@ public sealed class GamePlayer(Guid userId, string username, int seatIndex, int 
     public bool HasFolded { get; set; }
     public bool IsAllIn { get; set; }
     public bool HasActedThisRound { get; set; }
+    public bool IsSittingOut { get; internal set; }
+    internal bool HasAbandoned { get; set; }
     public int TotalCommitted { get; private set; }
     public List<Card> HoleCards { get; } = new();
 
-    public bool IsInHand => !HasFolded && (Chips > 0 || IsAllIn);
+    internal bool CanBeDealtIn => Chips > 0 && !IsSittingOut;
+    public bool IsInHand => !HasFolded && !IsSittingOut && (Chips > 0 || IsAllIn);
 
-    public bool CanAct => !HasFolded && !IsAllIn && Chips > 0;
+    public bool CanAct => IsInHand && !IsAllIn && Chips > 0;
 
     public void ResetForHand()
     {
         CurrentBet = 0;
         TotalCommitted = 0;
-        HasFolded = false;
+        HasFolded = IsSittingOut;
         IsAllIn = false;
         HasActedThisRound = false;
         HoleCards.Clear();
@@ -452,6 +497,9 @@ public sealed class GamePlayer(Guid userId, string username, int seatIndex, int 
     }
 }
 
-public sealed record GameResult(int Pot, string HandDescription, IReadOnlyList<GameWinner> Winners);
+public sealed record GameResult(int Pot, string HandDescription, IReadOnlyList<GameWinner> Winners)
+{
+    public IReadOnlyList<Card> Board { get; init; } = [];
+}
 
 public sealed record GameWinner(Guid UserId, string Username, int Winnings);
